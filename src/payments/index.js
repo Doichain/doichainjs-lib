@@ -8,6 +8,7 @@ exports.p2tr =
   exports.p2pk =
   exports.p2ms =
   exports.embed =
+  exports.p2wpkhNonstandard =
     void 0;
 const embed_1 = require('./embed');
 Object.defineProperty(exports, 'embed', {
@@ -63,6 +64,20 @@ Object.defineProperty(exports, 'p2tr', {
   enumerable: true,
   get: function () {
     return p2tr_1.p2tr;
+  },
+});
+const p2wpkhNonstandard_1 = require('./p2wpkhNonstandard');
+Object.defineProperty(exports, 'p2wpkhNonstandard', {
+  enumerable: true,
+  get: function () {
+    return p2wpkhNonstandard_1.p2wpkhNonstandard;
+  },
+});
+const p2pkhNonstandard_1 = require('./p2pkhNonstandard');
+Object.defineProperty(exports, 'p2pkhNonstandard', {
+  enumerable: true,
+  get: function () {
+    return p2pkhNonstandard_1.p2pkhNonstandard;
   },
 });
 // TODO

@@ -64,6 +64,9 @@ function isPoint(p) {
   if (y.compare(ZERO32) === 0) return false;
   if (y.compare(EC_P) >= 0) return false;
   if (t === 0x04 && p.length === 65) return true;
+
+  if (t === 0x02 && p.length === 33) return true; //Doichain
+  if (t === 0x07 && p.length === 36) return true;
   return false;
 }
 exports.isPoint = isPoint;

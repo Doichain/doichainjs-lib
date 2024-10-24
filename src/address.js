@@ -128,11 +128,15 @@ function fromOutputScript(output, network) {
   try {
     return _toFutureSegwitAddress(output, network);
   } catch (e) {}
-  try { 
-        const chunks = bscript.decompile(output);
-        return toBech32(Buffer.from(chunks[6], 'hex'), 0, network.bech32);
-    }
-    catch (e) {}
+  try {
+    const chunks = bscript.decompile(output);
+    return toBech32(Buffer.from(chunks[6], 'hex'), 0, network.bech32);
+  } catch (e) {}
+  try {
+    const chunks = bscript.decompile(output);
+    const address = toBase58Check(Buffer.from(chunks[7], 'hex'), network.pubKeyHash);
+    return address;
+  } catch (e) {}
   throw new Error(bscript.toASM(output) + ' has no matching Address');
 }
 exports.fromOutputScript = fromOutputScript;

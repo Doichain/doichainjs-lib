@@ -10,8 +10,10 @@ exports.signatureBlocksAction =
   exports.isP2WSHScript =
   exports.isP2WPKH =
   exports.isP2PKH =
+  exports.isP2PKHNonStandard =
   exports.isP2PK =
   exports.isP2MS =
+  exports.isP2WPKHNonStandard =
     void 0;
 const varuint = require('bip174/src/lib/converter/varint');
 const bscript = require('../script');
@@ -36,10 +38,12 @@ function isPaymentFactory(payment) {
 exports.isP2MS = isPaymentFactory(payments.p2ms);
 exports.isP2PK = isPaymentFactory(payments.p2pk);
 exports.isP2PKH = isPaymentFactory(payments.p2pkh);
+exports.isP2PKHNonStandard = isPaymentFactory(payments.p2pkhNonstandard);
 exports.isP2WPKH = isPaymentFactory(payments.p2wpkh);
 exports.isP2WSHScript = isPaymentFactory(payments.p2wsh);
 exports.isP2SHScript = isPaymentFactory(payments.p2sh);
 exports.isP2TR = isPaymentFactory(payments.p2tr);
+exports.isP2WPKHNonStandard = isPaymentFactory(payments.p2wpkhNonstandard);
 /**
  * Converts a witness stack to a script witness.
  * @param witness The witness stack to convert.
