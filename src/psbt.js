@@ -673,9 +673,6 @@ class Psbt {
     keyPair,
     sighashTypes = [transaction_1.Transaction.SIGHASH_ALL],
   ) {
-    console.log('______inputIndex', inputIndex);
-    console.log('______keyPair', keyPair);
-    console.log('______sighashTypes', sighashTypes);
     const { hash, sighashType } = getHashAndSighashType(
       this.data.inputs,
       inputIndex,
@@ -985,8 +982,6 @@ class PsbtTransaction {
   }
 }
 function canFinalize(input, script, scriptType) {
-  console.log('___canFinalize', scriptType);
-  console.log('___input__psbt', input);
   switch (scriptType) {
     case 'pubkey':
     case 'pubkeyhash':
@@ -1465,14 +1460,11 @@ function getPayment(script, scriptType, partialSig) {
         pubkey: partialSig[0].pubkey,
         signature: partialSig[0].signature,
       });
-      console.log('_____payment__pubkeyhashnonstandard_', payment);
       break;
   }
-  console.log('_____payment__11_', payment);
   return payment;
 }
 function getScriptFromInput(inputIndex, input, cache) {
-  console.log('______getScriptFromInput___', input);
   const unsignedTx = cache.__TX;
   const res = {
     script: null,
