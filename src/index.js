@@ -21,6 +21,8 @@ const payments = require('./payments');
 exports.payments = payments;
 const script = require('./script');
 exports.script = script;
+const { getNameOPStackScript } = require('./doichain/getNameOPStackScript');
+exports.getNameOPStackScript = getNameOPStackScript;
 var block_1 = require('./block');
 Object.defineProperty(exports, 'Block', {
   enumerable: true,

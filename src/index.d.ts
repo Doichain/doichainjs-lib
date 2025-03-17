@@ -4,6 +4,7 @@ import * as networks from './networks';
 import * as payments from './payments';
 import * as script from './script';
 export { address, crypto, networks, payments, script };
+export { getNameOPStackScript } from './doichain/getNameOPStackScript';
 export { Block } from './block';
 /** @hidden */
 export { TaggedHashPrefix } from './crypto';
