@@ -1,6 +1,3 @@
-'use strict';
-Object.defineProperty(exports, '__esModule', { value: true });
-exports.nameScriptOwner = exports.NAME_OPCODES = void 0;
 /**
  * Name operations in Doichain (and Namecoin) output scripts.
  *
@@ -10,19 +7,22 @@ exports.nameScriptOwner = exports.NAME_OPCODES = void 0;
  *
  * @packageDocumentation
  */
-const ops_1 = require('./ops');
+import { OPS } from './ops';
+
 /**
  * Opcodes that start a name operation: `OP_NAME_NEW` (`OP_1`),
  * `OP_NAME_FIRSTUPDATE` (`OP_2`), `OP_NAME_UPDATE` (`OP_3`) and Doichain's
  * `OP_NAME_DOI` (`OP_10`).
  */
-exports.NAME_OPCODES = [
-  ops_1.OPS.OP_1,
-  ops_1.OPS.OP_2,
-  ops_1.OPS.OP_3,
-  ops_1.OPS.OP_10,
+export const NAME_OPCODES: readonly number[] = [
+  OPS.OP_1,
+  OPS.OP_2,
+  OPS.OP_3,
+  OPS.OP_10,
 ];
-const SEPARATORS = [ops_1.OPS.OP_DROP, ops_1.OPS.OP_2DROP, ops_1.OPS.OP_NOP];
+
+const SEPARATORS: readonly number[] = [OPS.OP_DROP, OPS.OP_2DROP, OPS.OP_NOP];
+
 /**
  * Returns the owner's script of a name output: the output script behind the
  * name prefix.
@@ -42,27 +42,29 @@ const SEPARATORS = [ops_1.OPS.OP_DROP, ops_1.OPS.OP_2DROP, ops_1.OPS.OP_NOP];
  * @param script - The output script.
  * @returns The owner's script, or `undefined` if the script carries no name.
  */
-function nameScriptOwner(script) {
-  if (!Buffer.isBuffer(script) || !exports.NAME_OPCODES.includes(script[0]))
+export function nameScriptOwner(script: Buffer): Buffer | undefined {
+  if (!Buffer.isBuffer(script) || !NAME_OPCODES.includes(script[0]))
     return undefined;
+
   let position = 1;
   for (;;) {
     if (position >= script.length) return undefined;
     const opcode = script[position];
     if (SEPARATORS.includes(opcode)) break;
     position += 1;
-    let length;
-    if (opcode < ops_1.OPS.OP_PUSHDATA1) {
+
+    let length: number;
+    if (opcode < OPS.OP_PUSHDATA1) {
       length = opcode;
-    } else if (opcode === ops_1.OPS.OP_PUSHDATA1) {
+    } else if (opcode === OPS.OP_PUSHDATA1) {
       if (position + 1 > script.length) return undefined;
       length = script.readUInt8(position);
       position += 1;
-    } else if (opcode === ops_1.OPS.OP_PUSHDATA2) {
+    } else if (opcode === OPS.OP_PUSHDATA2) {
       if (position + 2 > script.length) return undefined;
       length = script.readUInt16LE(position);
       position += 2;
-    } else if (opcode === ops_1.OPS.OP_PUSHDATA4) {
+    } else if (opcode === OPS.OP_PUSHDATA4) {
       if (position + 4 > script.length) return undefined;
       length = script.readUInt32LE(position);
       position += 4;
@@ -71,9 +73,9 @@ function nameScriptOwner(script) {
     }
     position += length;
   }
+
   while (position < script.length && SEPARATORS.includes(script[position]))
     position += 1;
   if (position >= script.length) return undefined;
   return script.slice(position);
 }
-exports.nameScriptOwner = nameScriptOwner;

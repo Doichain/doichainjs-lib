@@ -8,6 +8,7 @@ exports.initEccLib =
   exports.script =
   exports.payments =
   exports.networks =
+  exports.nameops =
   exports.crypto =
   exports.address =
     void 0;
@@ -15,6 +16,8 @@ const address = require('./address');
 exports.address = address;
 const crypto = require('./crypto');
 exports.crypto = crypto;
+const nameops = require('./nameops');
+exports.nameops = nameops;
 const networks = require('./networks');
 exports.networks = networks;
 const payments = require('./payments');

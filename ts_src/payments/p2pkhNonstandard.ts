@@ -1,8 +1,7 @@
-'use strict';
-Object.defineProperty(exports, '__esModule', { value: true });
-exports.p2pkhNonstandard = void 0;
-const nameops_1 = require('../nameops');
-const p2pkh_1 = require('./p2pkh');
+import { nameScriptOwner } from '../nameops';
+import { Payment, PaymentOpts } from './index';
+import { p2pkh } from './p2pkh';
+
 // output: {name operation} {pushes} OP_2DROP/OP_DROP OP_DUP OP_HASH160 {hash160(pubkey)} OP_EQUALVERIFY OP_CHECKSIG
 // input: {signature} {pubkey}
 /**
@@ -22,18 +21,15 @@ const p2pkh_1 = require('./p2pkh');
  * @throws {TypeError} If `output` is not a name script held by a P2PKH address,
  * or if the other data does not match it.
  */
-function p2pkhNonstandard(a, opts) {
+export function p2pkhNonstandard(a: Payment, opts?: PaymentOpts): Payment {
   const { output, ...holder } = a;
-  let owner;
+  let owner: Buffer | undefined;
   if (output !== undefined) {
-    owner = (0, nameops_1.nameScriptOwner)(output);
+    owner = nameScriptOwner(output);
     if (!owner) throw new TypeError('Output is not a name script');
   }
-  const payment = (0, p2pkh_1.p2pkh)(
-    owner ? { ...holder, output: owner } : holder,
-    opts,
-  );
+
+  const payment = p2pkh(owner ? { ...holder, output: owner } : holder, opts);
   payment.output = output;
   return payment;
 }
-exports.p2pkhNonstandard = p2pkhNonstandard;

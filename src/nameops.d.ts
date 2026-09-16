@@ -1,18 +1,25 @@
 /// <reference types="node" />
 /**
- * Name operations: OP_NAME_NEW (OP_1), OP_NAME_FIRSTUPDATE (OP_2),
- * OP_NAME_UPDATE (OP_3) and Doichain's OP_NAME_DOI (OP_10).
+ * Opcodes that start a name operation: `OP_NAME_NEW` (`OP_1`),
+ * `OP_NAME_FIRSTUPDATE` (`OP_2`), `OP_NAME_UPDATE` (`OP_3`) and Doichain's
+ * `OP_NAME_DOI` (`OP_10`).
  */
-export declare const NAME_OPCODES: number[];
+export declare const NAME_OPCODES: readonly number[];
 /**
- * The script of the address that holds a name output:
- * `<name op> <pushes> OP_2DROP / OP_DROP ... <owner's script>`.
+ * Returns the owner's script of a name output: the output script behind the
+ * name prefix.
  *
- * Parsed like Namecoin's `CNameScript`: pushes up to the first `OP_DROP`,
- * `OP_2DROP` or `OP_NOP`, then any further `OP_DROP`, `OP_2DROP` or `OP_NOP`.
- * Pushes are read with their real length, so empty and one-byte values do not
- * shift the result, and an opcode that is not a push (such as `OP_1` for a
- * value) makes the script a non-name script, as in Doichain Core.
+ * The prefix is parsed like Namecoin's `CNameScript`: pushes up to the first
+ * `OP_DROP`, `OP_2DROP` or `OP_NOP`, then any further `OP_DROP`, `OP_2DROP` or
+ * `OP_NOP`. Pushes are read with their real length, so empty and one-byte
+ * values do not shift the result. An opcode that is not a push (such as `OP_1`
+ * for a value) makes the script a non-name script, as in Doichain Core.
+ *
+ * @example
+ * ```ts
+ * const owner = nameops.nameScriptOwner(output);
+ * if (owner) console.log(address.fromOutputScript(owner, network));
+ * ```
  *
  * @param script - The output script.
  * @returns The owner's script, or `undefined` if the script carries no name.

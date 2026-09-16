@@ -1,4 +1,10 @@
+import { nameScriptOwner } from '../nameops';
 import { Payment, PaymentOpts } from './index';
+import { p2wpkh } from './p2wpkh';
+
+// output: {name operation} {pushes} OP_2DROP/OP_DROP OP_0 {hash160(pubkey)}
+// witness: {signature} {pubkey}
+// input: <>
 /**
  * Creates a payment for a name output held by a Pay-to-Witness-Public-Key-Hash
  * (P2WPKH) address.
@@ -16,4 +22,15 @@ import { Payment, PaymentOpts } from './index';
  * @throws {TypeError} If `output` is not a name script held by a P2WPKH
  * address, or if the other data does not match it.
  */
-export declare function p2wpkhNonstandard(a: Payment, opts?: PaymentOpts): Payment;
+export function p2wpkhNonstandard(a: Payment, opts?: PaymentOpts): Payment {
+  const { output, ...holder } = a;
+  let owner: Buffer | undefined;
+  if (output !== undefined) {
+    owner = nameScriptOwner(output);
+    if (!owner) throw new TypeError('Output is not a name script');
+  }
+
+  const payment = p2wpkh(owner ? { ...holder, output: owner } : holder, opts);
+  payment.output = output;
+  return payment;
+}

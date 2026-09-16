@@ -4,11 +4,14 @@ export declare const isP2MS: (script: Buffer) => boolean;
 export declare const isP2PK: (script: Buffer) => boolean;
 export declare const isP2PKH: (script: Buffer) => boolean;
 export declare const isP2WPKH: (script: Buffer) => boolean;
-export declare const isP2PKHNonStandard: (script: Buffer) => boolean;
 export declare const isP2WSHScript: (script: Buffer) => boolean;
 export declare const isP2SHScript: (script: Buffer) => boolean;
 export declare const isP2TR: (script: Buffer) => boolean;
+/** Whether the script is a name output held by a P2PKH address. */
+export declare const isP2PKHNonStandard: (script: Buffer) => boolean;
+/** Whether the script is a name output held by a P2WPKH address. */
 export declare const isP2WPKHNonStandard: (script: Buffer) => boolean;
+export { nameScriptOwner } from '../nameops';
 /**
  * Converts a witness stack to a script witness.
  * @param witness The witness stack to convert.
@@ -49,8 +52,3 @@ type SignatureDecodeFunc = (buffer: Buffer) => {
  * @returns True if the action is allowed, false otherwise.
  */
 export declare function signatureBlocksAction(signature: Buffer, signatureDecodeFn: SignatureDecodeFunc, action: string): boolean;
-export {};
-/**
- * The script of the address that holds a name output, or undefined if the script carries no name.
- */
-export declare function nameScriptOwner(script: Buffer): Buffer | undefined;

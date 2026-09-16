@@ -102,6 +102,11 @@
       "description": "name_doi ended by OP_NOP",
       "script": "5a0568656c6c6f05776f726c646176a914111111111111111111111111111111111111111188ac",
       "owner": "76a914111111111111111111111111111111111111111188ac"
+    },
+    {
+      "description": "name_doi with an OP_PUSHDATA4 push, held by P2PKH",
+      "script": "5a4e0500000068656c6c6f05776f726c646d7576a914111111111111111111111111111111111111111188ac",
+      "owner": "76a914111111111111111111111111111111111111111188ac"
     }
   ],
   "notNameScripts": [
@@ -132,6 +137,18 @@
     {
       "description": "empty script",
       "script": ""
+    },
+    {
+      "description": "OP_PUSHDATA4 without its length",
+      "script": "5a4effff"
+    },
+    {
+      "description": "OP_PUSHDATA1 without its length",
+      "script": "5a4c"
+    },
+    {
+      "description": "OP_PUSHDATA2 without its length",
+      "script": "5a4dff"
     }
   ]
 }
