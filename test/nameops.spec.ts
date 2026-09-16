@@ -261,6 +261,25 @@ describe('name operations', () => {
       );
     });
 
+    it('does not return an address for a name operation without its value', () => {
+      // OP_NAME_DOI <name> OP_2DROP OP_DROP <owner>: one push instead of two,
+      // so Doichain Core reads no name here.
+      const script = Buffer.concat([
+        bscript.compile([
+          OPS.OP_10,
+          Buffer.from('hello', 'utf8'),
+          OPS.OP_2DROP,
+          OPS.OP_DROP,
+        ]),
+        owners.P2PKH.output!,
+      ]);
+      assert.strictEqual(nameops.nameScriptOwner(script), undefined);
+      assert.throws(
+        () => address.fromOutputScript(script, network),
+        /has no matching Address/,
+      );
+    });
+
     it('does not return an address for a name held by a non-standard script', () => {
       assert.throws(
         () =>

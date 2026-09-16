@@ -149,6 +149,26 @@
     {
       "description": "OP_PUSHDATA2 without its length",
       "script": "5a4dff"
+    },
+    {
+      "description": "name_doi with a name but no value",
+      "script": "5a0568656c6c6f6d7576a914111111111111111111111111111111111111111188ac"
+    },
+    {
+      "description": "name_doi with three pushes",
+      "script": "5a0568656c6c6f05776f726c6401616d7576a914111111111111111111111111111111111111111188ac"
+    },
+    {
+      "description": "name_update with one push",
+      "script": "530568656c6c6f7576a914111111111111111111111111111111111111111188ac"
+    },
+    {
+      "description": "name_new with two pushes",
+      "script": "511455555555555555555555555555555555555555550568656c6c6f6d76a914111111111111111111111111111111111111111188ac"
+    },
+    {
+      "description": "name_firstupdate with two pushes",
+      "script": "520568656c6c6f05776f726c646d76a914111111111111111111111111111111111111111188ac"
     }
   ]
 }

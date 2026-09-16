@@ -23,6 +23,13 @@ exports.NAME_OPCODES = [
   ops_1.OPS.OP_10,
 ];
 const SEPARATORS = [ops_1.OPS.OP_DROP, ops_1.OPS.OP_2DROP, ops_1.OPS.OP_NOP];
+/** How many pushes each name operation takes, as checked by Doichain Core. */
+const ARGUMENT_COUNTS = {
+  [ops_1.OPS.OP_1]: 1,
+  [ops_1.OPS.OP_2]: 3,
+  [ops_1.OPS.OP_3]: 2,
+  [ops_1.OPS.OP_10]: 2, // OP_NAME_DOI <name> <value>
+};
 /**
  * Returns the owner's script of a name output: the output script behind the
  * name prefix.
@@ -30,8 +37,11 @@ const SEPARATORS = [ops_1.OPS.OP_DROP, ops_1.OPS.OP_2DROP, ops_1.OPS.OP_NOP];
  * The prefix is parsed like Namecoin's `CNameScript`: pushes up to the first
  * `OP_DROP`, `OP_2DROP` or `OP_NOP`, then any further `OP_DROP`, `OP_2DROP` or
  * `OP_NOP`. Pushes are read with their real length, so empty and one-byte
- * values do not shift the result. An opcode that is not a push (such as `OP_1`
- * for a value) makes the script a non-name script, as in Doichain Core.
+ * values do not shift the result. As in Doichain Core, the script is a non-name
+ * script if the prefix holds an opcode that is not a push (such as `OP_1` for a
+ * value) or the wrong number of pushes for its operation: one for
+ * `OP_NAME_NEW`, three for `OP_NAME_FIRSTUPDATE`, two for `OP_NAME_UPDATE` and
+ * `OP_NAME_DOI`.
  *
  * @example
  * ```ts
@@ -46,11 +56,13 @@ function nameScriptOwner(script) {
   if (!Buffer.isBuffer(script) || !exports.NAME_OPCODES.includes(script[0]))
     return undefined;
   let position = 1;
+  let pushes = 0;
   for (;;) {
     if (position >= script.length) return undefined;
     const opcode = script[position];
     if (SEPARATORS.includes(opcode)) break;
     position += 1;
+    pushes += 1;
     let length;
     if (opcode < ops_1.OPS.OP_PUSHDATA1) {
       length = opcode;
@@ -71,6 +83,7 @@ function nameScriptOwner(script) {
     }
     position += length;
   }
+  if (pushes !== ARGUMENT_COUNTS[script[0]]) return undefined;
   while (position < script.length && SEPARATORS.includes(script[position]))
     position += 1;
   if (position >= script.length) return undefined;

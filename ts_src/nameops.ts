@@ -23,6 +23,14 @@ export const NAME_OPCODES: readonly number[] = [
 
 const SEPARATORS: readonly number[] = [OPS.OP_DROP, OPS.OP_2DROP, OPS.OP_NOP];
 
+/** How many pushes each name operation takes, as checked by Doichain Core. */
+const ARGUMENT_COUNTS: Readonly<Record<number, number>> = {
+  [OPS.OP_1]: 1, // OP_NAME_NEW <hash>
+  [OPS.OP_2]: 3, // OP_NAME_FIRSTUPDATE <name> <rand> <value>
+  [OPS.OP_3]: 2, // OP_NAME_UPDATE <name> <value>
+  [OPS.OP_10]: 2, // OP_NAME_DOI <name> <value>
+};
+
 /**
  * Returns the owner's script of a name output: the output script behind the
  * name prefix.
@@ -30,8 +38,11 @@ const SEPARATORS: readonly number[] = [OPS.OP_DROP, OPS.OP_2DROP, OPS.OP_NOP];
  * The prefix is parsed like Namecoin's `CNameScript`: pushes up to the first
  * `OP_DROP`, `OP_2DROP` or `OP_NOP`, then any further `OP_DROP`, `OP_2DROP` or
  * `OP_NOP`. Pushes are read with their real length, so empty and one-byte
- * values do not shift the result. An opcode that is not a push (such as `OP_1`
- * for a value) makes the script a non-name script, as in Doichain Core.
+ * values do not shift the result. As in Doichain Core, the script is a non-name
+ * script if the prefix holds an opcode that is not a push (such as `OP_1` for a
+ * value) or the wrong number of pushes for its operation: one for
+ * `OP_NAME_NEW`, three for `OP_NAME_FIRSTUPDATE`, two for `OP_NAME_UPDATE` and
+ * `OP_NAME_DOI`.
  *
  * @example
  * ```ts
@@ -47,11 +58,13 @@ export function nameScriptOwner(script: Buffer): Buffer | undefined {
     return undefined;
 
   let position = 1;
+  let pushes = 0;
   for (;;) {
     if (position >= script.length) return undefined;
     const opcode = script[position];
     if (SEPARATORS.includes(opcode)) break;
     position += 1;
+    pushes += 1;
 
     let length: number;
     if (opcode < OPS.OP_PUSHDATA1) {
@@ -73,6 +86,7 @@ export function nameScriptOwner(script: Buffer): Buffer | undefined {
     }
     position += length;
   }
+  if (pushes !== ARGUMENT_COUNTS[script[0]]) return undefined;
 
   while (position < script.length && SEPARATORS.includes(script[position]))
     position += 1;
