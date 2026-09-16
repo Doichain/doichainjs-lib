@@ -91,7 +91,7 @@ Inputs spent without a witness, including names held by P2PKH addresses, need `n
 - Show users a freshly decoded version of every transaction before they sign it, including the name, value and holder of every name output.
 - Keep the PSBT checks on. Signing a non-segwit input without its previous transaction lets a PSBT lie about amounts, and so about the fee.
 - Nothing yet proves that the npm release matches this repository. Verify what you install.
-- Report security problems privately to the maintainers of the [Doichain organization](https://github.com/Doichain), not in a public issue.
+- Report security problems privately through [a security advisory](https://github.com/Doichain/doichainjs-lib/security/advisories/new), not in a public issue. See [SECURITY.md](SECURITY.md).
 
 ## Development
 
