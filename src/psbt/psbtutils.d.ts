@@ -50,3 +50,7 @@ type SignatureDecodeFunc = (buffer: Buffer) => {
  */
 export declare function signatureBlocksAction(signature: Buffer, signatureDecodeFn: SignatureDecodeFunc, action: string): boolean;
 export {};
+/**
+ * The script of the address that holds a name output, or undefined if the script carries no name.
+ */
+export declare function nameScriptOwner(script: Buffer): Buffer | undefined;
