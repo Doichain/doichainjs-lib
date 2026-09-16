@@ -21,6 +21,7 @@ const bscript = require('../script');
 const transaction_1 = require('../transaction');
 const crypto_1 = require('../crypto');
 const payments = require('../payments');
+const nameops_1 = require('../nameops');
 /**
  * Checks if a given payment factory can generate a payment script from a given script.
  * @param payment The payment factory to check.
@@ -40,7 +41,7 @@ exports.isP2MS = isPaymentFactory(payments.p2ms);
 exports.isP2PK = isPaymentFactory(payments.p2pk);
 exports.isP2PKH = isPaymentFactory(payments.p2pkh);
 exports.isP2PKHNonStandard = script => {
-  const owner = nameScriptOwner(script);
+  const owner = (0, nameops_1.nameScriptOwner)(script);
   return !!owner && (0, exports.isP2PKH)(owner);
 };
 exports.isP2WPKH = isPaymentFactory(payments.p2wpkh);
@@ -48,65 +49,10 @@ exports.isP2WSHScript = isPaymentFactory(payments.p2wsh);
 exports.isP2SHScript = isPaymentFactory(payments.p2sh);
 exports.isP2TR = isPaymentFactory(payments.p2tr);
 exports.isP2WPKHNonStandard = script => {
-  const owner = nameScriptOwner(script);
+  const owner = (0, nameops_1.nameScriptOwner)(script);
   return !!owner && (0, exports.isP2WPKH)(owner);
 };
-/** Name operations: OP_NAME_NEW, OP_NAME_FIRSTUPDATE, OP_NAME_UPDATE and Doichain's OP_NAME_DOI (OP_10) */
-const NAME_OPCODES = [0x51, 0x52, 0x53, 0x5a];
-const OP_PUSHDATA1 = 0x4c;
-const OP_PUSHDATA2 = 0x4d;
-const OP_PUSHDATA4 = 0x4e;
-const OP_NOP = 0x61;
-const OP_2DROP = 0x6d;
-const OP_DROP = 0x75;
-/**
- * The script of the address that holds a name output:
- * <name op> <pushes> OP_2DROP / OP_DROP ... <owner's script>.
- * Parsed like Namecoin's CNameScript: pushes up to the first DROP, 2DROP or NOP,
- * then any further DROP, 2DROP or NOP. Pushes are read with their real length,
- * so empty and one-byte values do not shift the result.
- * @param script The output script.
- * @returns The owner's script, or undefined if the script carries no name.
- */
-function nameScriptOwner(script) {
-  if (!Buffer.isBuffer(script) || !NAME_OPCODES.includes(script[0]))
-    return undefined;
-  let position = 1;
-  let opcode;
-  for (;;) {
-    if (position >= script.length) return undefined;
-    opcode = script[position];
-    if (opcode === OP_DROP || opcode === OP_2DROP || opcode === OP_NOP) break;
-    position += 1;
-    let length;
-    if (opcode < OP_PUSHDATA1) {
-      length = opcode;
-    } else if (opcode === OP_PUSHDATA1) {
-      if (position + 1 > script.length) return undefined;
-      length = script.readUInt8(position);
-      position += 1;
-    } else if (opcode === OP_PUSHDATA2) {
-      if (position + 2 > script.length) return undefined;
-      length = script.readUInt16LE(position);
-      position += 2;
-    } else if (opcode === OP_PUSHDATA4) {
-      if (position + 4 > script.length) return undefined;
-      length = script.readUInt32LE(position);
-      position += 4;
-    } else {
-      return undefined;
-    }
-    position += length;
-  }
-  while (
-    position < script.length &&
-    [OP_DROP, OP_2DROP, OP_NOP].includes(script[position])
-  )
-    position += 1;
-  if (position >= script.length) return undefined;
-  return script.slice(position);
-}
-exports.nameScriptOwner = nameScriptOwner;
+exports.nameScriptOwner = nameops_1.nameScriptOwner;
 /**
  * Converts a witness stack to a script witness.
  * @param witness The witness stack to convert.
