@@ -808,31 +808,43 @@ class TaprootMultisigWallet {
   private paymentCache: bitcoin.Payment | null = null;
   private readonly publicKeyCache: Buffer;
   network: bitcoin.Network;
+  /**
+   * A list of all the (x-only) pubkeys in the multisig
+   */
+  private readonly pubkeys: Buffer[];
+  /**
+   * The number of required signatures
+   */
+  private readonly requiredSigs: number;
+  /**
+   * The private key you hold.
+   */
+  private readonly privateKey: Buffer;
+  /**
+   * leaf version (0xc0 currently)
+   */
+  readonly leafVersion: number;
+  /**
+   * Optional shared nonce. This should be used in wallets where
+   * the fact that key-spend is unspendable should not be public,
+   * BUT each signer must verify that it is unspendable to be safe.
+   */
+  private readonly sharedNonce?: Buffer;
 
+  // Plain fields instead of parameter properties: Node 22.18+ loads .ts test
+  // files with its own type stripping, which rejects parameter properties.
   constructor(
-    /**
-     * A list of all the (x-only) pubkeys in the multisig
-     */
-    private readonly pubkeys: Buffer[],
-    /**
-     * The number of required signatures
-     */
-    private readonly requiredSigs: number,
-    /**
-     * The private key you hold.
-     */
-    private readonly privateKey: Buffer,
-    /**
-     * leaf version (0xc0 currently)
-     */
-    readonly leafVersion: number,
-    /**
-     * Optional shared nonce. This should be used in wallets where
-     * the fact that key-spend is unspendable should not be public,
-     * BUT each signer must verify that it is unspendable to be safe.
-     */
-    private readonly sharedNonce?: Buffer,
+    pubkeys: Buffer[],
+    requiredSigs: number,
+    privateKey: Buffer,
+    leafVersion: number,
+    sharedNonce?: Buffer,
   ) {
+    this.pubkeys = pubkeys;
+    this.requiredSigs = requiredSigs;
+    this.privateKey = privateKey;
+    this.leafVersion = leafVersion;
+    this.sharedNonce = sharedNonce;
     this.network = bitcoin.networks.bitcoin;
     assert(pubkeys.length > 0, 'Need pubkeys');
     assert(

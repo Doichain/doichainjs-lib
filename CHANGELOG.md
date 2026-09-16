@@ -1,4 +1,4 @@
-# Unreleased (Doichain)
+# 6.2.0 (Doichain)
 __fixed__
 - Restore the PSBT checks of bitcoinjs-lib: signing a non-segwit input needs its previous transaction again, and inputs and outputs can no longer be changed after signatures exist (#9)
 - `types.isPoint` no longer accepts 36-byte buffers starting with `0x07` as public keys (#9)
