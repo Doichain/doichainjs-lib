@@ -1,1 +1,7 @@
-{}
+{
+  "1113686": {
+    "active": true,
+    "notes": "serialize-javascript in mocha 10, the test runner; not part of the published package. mocha 11 fixes it but needs Node 18, while CI still tests Node 14.",
+    "expiry": "2027-03-31"
+  }
+}
