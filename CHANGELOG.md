@@ -1,3 +1,19 @@
+# Unreleased (Doichain)
+__fixed__
+- Restore the PSBT checks of bitcoinjs-lib: signing a non-segwit input needs its previous transaction again, and inputs and outputs can no longer be changed after signatures exist (#9)
+- `types.isPoint` no longer accepts 36-byte buffers starting with `0x07` as public keys (#9)
+- `address.fromOutputScript` returns the holder's address of a name output for every standard owner type, and no address for scripts that are neither (#9)
+- Sign and finalize name inputs held by P2WPKH addresses with BIP143 and a witness (#8)
+- `payments.p2pkhNonstandard` and `payments.p2wpkhNonstandard` return the holder's address and scriptSig or witness for a name output instead of wrong or rejected results
+
+__added__
+- `nameops` module with `nameScriptOwner` and `NAME_OPCODES`
+- Tests for name operations with transactions accepted by a Doichain Core regtest node
+
+__changed__
+- The Doichain changes are TypeScript sources in `ts_src/`, so `npm run build` keeps them
+- `base-x` 4.0.1 (GHSA-xq7p-g2vc-g82p)
+
 # 6.1.6
 __fixed__
 - Fix sighash treatment when signing taproot script sign scripts using Psbt (#2104)
