@@ -1056,9 +1056,8 @@ function checkInputsForPartialSig(inputs, action) {
     const throws = (0, bip371_1.isTaprootInput)(input)
       ? (0, bip371_1.checkTaprootInputForSigs)(input, action)
       : (0, psbtutils_1.checkInputForSig)(input, action);
-    //if (throws)
-    //throw new Error('Can not modify transaction, signatures exist.');
-    // console.warn('Can not modify transaction, signatures exist.');
+    if (throws)
+      throw new Error('Can not modify transaction, signatures exist.');
   });
 }
 function checkPartialSigSighashes(input) {
@@ -1294,7 +1293,6 @@ function getHashForSig(inputIndex, input, cache, forValidate, sighashTypes) {
     );
   } else {
     // non-segwit
-    /*
     if (
       input.nonWitnessUtxo === undefined &&
       cache.__UNSAFE_SIGN_NONSEGWIT === false
@@ -1303,7 +1301,6 @@ function getHashForSig(inputIndex, input, cache, forValidate, sighashTypes) {
         `Input #${inputIndex} has witnessUtxo but non-segwit script: ` +
           `${meaningfulScript.toString('hex')}`,
       );
-      */
     if (!forValidate && cache.__UNSAFE_SIGN_NONSEGWIT !== false)
       console.warn(
         'Warning: Signing non-segwit inputs without the full parent transaction ' +
@@ -1458,8 +1455,9 @@ function getPayment(script, scriptType, partialSig) {
       });
       break;
     case 'pubkeyhashnonstandard':
-      payment = payments.p2pkhNonstandard({
-        output: script,
+      // the scriptSig [signature, pubkey] of the P2PKH address that holds the name
+      payment = payments.p2pkh({
+        output: (0, psbtutils_1.nameScriptOwner)(script),
         pubkey: partialSig[0].pubkey,
         signature: partialSig[0].signature,
       });

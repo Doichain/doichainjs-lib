@@ -13,6 +13,7 @@ const bscript = require('./script');
 const types_1 = require('./types');
 const bech32_1 = require('bech32');
 const bs58check = require('bs58check');
+const nameops_1 = require('./nameops');
 const FUTURE_SEGWIT_MAX_SIZE = 40;
 const FUTURE_SEGWIT_MIN_SIZE = 2;
 const FUTURE_SEGWIT_MAX_VERSION = 16;
@@ -128,15 +129,13 @@ function fromOutputScript(output, network) {
   try {
     return _toFutureSegwitAddress(output, network);
   } catch (e) {}
-  try {
-    const chunks = bscript.decompile(output);
-    return toBech32(Buffer.from(chunks[6], 'hex'), 0, network.bech32);
-  } catch (e) {}
-  try {
-    const chunks = bscript.decompile(output);
-    const address = toBase58Check(Buffer.from(chunks[7], 'hex'), network.pubKeyHash);
-    return address;
-  } catch (e) {}
+  // A name output is paid to the script behind its name prefix
+  const owner = (0, nameops_1.nameScriptOwner)(output);
+  if (owner) {
+    try {
+      return fromOutputScript(owner, network);
+    } catch (e) {}
+  }
   throw new Error(bscript.toASM(output) + ' has no matching Address');
 }
 exports.fromOutputScript = fromOutputScript;
