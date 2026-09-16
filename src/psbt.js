@@ -1269,9 +1269,11 @@ function getHashForSig(inputIndex, input, cache, forValidate, sighashTypes) {
       sighashType,
     );
   } else if ((0, psbtutils_1.isP2WPKHNonStandard)(meaningfulScript)) {
-    // P2WPKH uses the P2PKH template for prevoutScript when signing
-    const signingScript = payments.p2wpkhNonstandard({
-      hash: meaningfulScript,
+    // A name output held by a P2WPKH address is spent like P2WPKH: BIP143 with
+    // the P2PKH template of the 20-byte witness program behind the name prefix
+    const owner = (0, psbtutils_1.nameScriptOwner)(meaningfulScript);
+    const signingScript = payments.p2pkh({
+      hash: owner.slice(2),
     }).output;
     hash = unsignedTx.hashForWitnessV0(
       inputIndex,
@@ -1448,8 +1450,9 @@ function getPayment(script, scriptType, partialSig) {
       });
       break;
     case 'witnesspubkeyhashnonstandard':
-      payment = payments.p2wpkhNonstandard({
-        output: script,
+      // the witness [signature, pubkey] of the P2WPKH address that holds the name
+      payment = payments.p2wpkh({
+        output: (0, psbtutils_1.nameScriptOwner)(script),
         pubkey: partialSig[0].pubkey,
         signature: partialSig[0].signature,
       });
@@ -1496,7 +1499,10 @@ function getScriptFromInput(inputIndex, input, cache) {
       res.script = input.witnessUtxo.script;
     }
   }
-  if (input.witnessScript || (0, psbtutils_1.isP2WPKH)(res.script)) {
+  if ((0, psbtutils_1.isP2WPKHNonStandard)(res.script)) {
+    // a name output held by a P2WPKH address needs a witness and an empty scriptSig
+    res.isSegwit = true;
+  } else if (input.witnessScript || (0, psbtutils_1.isP2WPKH)(res.script)) {
     if (input.version === 0x7100) {
       res.isNonStandardSegwit = true;
     } else {

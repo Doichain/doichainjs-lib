@@ -1,11 +1,11 @@
 'use strict';
 Object.defineProperty(exports, '__esModule', { value: true });
 exports.p2wpkh = void 0;
-const bcrypto = require('@doichain/doichainjs-lib/src/crypto');
-const networks_1 = require('@doichain/doichainjs-lib/src/networks');
-const bscript = require('@doichain/doichainjs-lib/src/script');
-const types_1 = require('@doichain/doichainjs-lib/src/types');
-const lazy = require('@doichain/doichainjs-lib/src/payments/lazy');
+const bcrypto = require('../crypto');
+const networks_1 = require('../networks');
+const bscript = require('../script');
+const types_1 = require('../types');
+const lazy = require('./lazy');
 const bech32_1 = require('bech32');
 const OPS = bscript.OPS;
 const EMPTY_BUFFER = Buffer.alloc(0);
