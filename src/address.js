@@ -8,12 +8,12 @@ exports.toOutputScript =
   exports.fromBase58Check =
     void 0;
 const networks = require('./networks');
+const nameops_1 = require('./nameops');
 const payments = require('./payments');
 const bscript = require('./script');
 const types_1 = require('./types');
 const bech32_1 = require('bech32');
 const bs58check = require('bs58check');
-const nameops_1 = require('./nameops');
 const FUTURE_SEGWIT_MAX_SIZE = 40;
 const FUTURE_SEGWIT_MIN_SIZE = 2;
 const FUTURE_SEGWIT_MAX_VERSION = 16;
@@ -106,7 +106,16 @@ function toBech32(data, version, prefix) {
 }
 exports.toBech32 = toBech32;
 /**
- * decode address from output script with network, return address if matched
+ * Returns the address an output script pays to.
+ *
+ * Standard scripts (P2PKH, P2SH, P2WPKH, P2WSH, P2TR and future segwit
+ * versions) map to their address. A name output maps to the address of the
+ * owner's script behind its name prefix, see {@link nameScriptOwner}.
+ *
+ * @param output - The output script.
+ * @param network - The network whose address prefixes to use. Defaults to Bitcoin.
+ * @returns The address.
+ * @throws {Error} If the script does not pay to an address.
  */
 function fromOutputScript(output, network) {
   // TODO: Network
@@ -129,7 +138,7 @@ function fromOutputScript(output, network) {
   try {
     return _toFutureSegwitAddress(output, network);
   } catch (e) {}
-  // A name output is paid to the script behind its name prefix
+  // A name output is paid to the owner's script behind its name prefix
   const owner = (0, nameops_1.nameScriptOwner)(output);
   if (owner) {
     try {
@@ -140,7 +149,12 @@ function fromOutputScript(output, network) {
 }
 exports.fromOutputScript = fromOutputScript;
 /**
- * encodes address to output script with network, return output script if address matched
+ * Returns the output script that pays to an address.
+ *
+ * @param address - A base58check or bech32/bech32m address.
+ * @param network - The network the address must belong to. Defaults to Bitcoin.
+ * @returns The output script.
+ * @throws {Error} If the address is invalid or belongs to another network.
  */
 function toOutputScript(address, network) {
   network = network || networks.bitcoin;

@@ -42,10 +42,24 @@ export declare function toBase58Check(hash: Buffer, version: number): string;
  */
 export declare function toBech32(data: Buffer, version: number, prefix: string): string;
 /**
- * decode address from output script with network, return address if matched
+ * Returns the address an output script pays to.
+ *
+ * Standard scripts (P2PKH, P2SH, P2WPKH, P2WSH, P2TR and future segwit
+ * versions) map to their address. A name output maps to the address of the
+ * owner's script behind its name prefix, see {@link nameScriptOwner}.
+ *
+ * @param output - The output script.
+ * @param network - The network whose address prefixes to use. Defaults to Bitcoin.
+ * @returns The address.
+ * @throws {Error} If the script does not pay to an address.
  */
 export declare function fromOutputScript(output: Buffer, network?: Network): string;
 /**
- * encodes address to output script with network, return output script if address matched
+ * Returns the output script that pays to an address.
+ *
+ * @param address - A base58check or bech32/bech32m address.
+ * @param network - The network the address must belong to. Defaults to Bitcoin.
+ * @returns The output script.
+ * @throws {Error} If the address is invalid or belongs to another network.
  */
 export declare function toOutputScript(address: string, network?: Network): Buffer;

@@ -1,18 +1,20 @@
 {
   "name": "@doichain/doichainjs-lib",
   "version": "6.1.7",
-  "description": "Client-side Bitcoin JavaScript library",
+  "description": "Doichain JavaScript library: addresses, scripts, transactions, PSBTs and name operations (a fork of bitcoinjs-lib)",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
   "engines": {
     "node": ">=8.0.0"
   },
   "keywords": [
+    "doichain",
+    "namecoin",
+    "name operations",
+    "psbt",
     "bitcoinjs",
     "bitcoin",
-    "browserify",
-    "javascript",
-    "bitcoinjs"
+    "javascript"
   ],
   "scripts": {
     "audit": "better-npm-audit audit -l high",
@@ -44,7 +46,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/bitcoinjs/bitcoinjs-lib.git"
+    "url": "https://github.com/Doichain/doichainjs-lib.git"
+  },
+  "homepage": "https://github.com/Doichain/doichainjs-lib#readme",
+  "bugs": {
+    "url": "https://github.com/Doichain/doichainjs-lib/issues"
   },
   "files": [
     "src"

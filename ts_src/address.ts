@@ -9,6 +9,7 @@
  */
 import { Network } from './networks';
 import * as networks from './networks';
+import { nameScriptOwner } from './nameops';
 import * as payments from './payments';
 import * as bscript from './script';
 import { typeforce, tuple, Hash160bit, UInt8 } from './types';
@@ -143,7 +144,16 @@ export function toBech32(
 }
 
 /**
- * decode address from output script with network, return address if matched
+ * Returns the address an output script pays to.
+ *
+ * Standard scripts (P2PKH, P2SH, P2WPKH, P2WSH, P2TR and future segwit
+ * versions) map to their address. A name output maps to the address of the
+ * owner's script behind its name prefix, see {@link nameScriptOwner}.
+ *
+ * @param output - The output script.
+ * @param network - The network whose address prefixes to use. Defaults to Bitcoin.
+ * @returns The address.
+ * @throws {Error} If the script does not pay to an address.
  */
 export function fromOutputScript(output: Buffer, network?: Network): string {
   // TODO: Network
@@ -168,11 +178,24 @@ export function fromOutputScript(output: Buffer, network?: Network): string {
     return _toFutureSegwitAddress(output, network);
   } catch (e) {}
 
+  // A name output is paid to the owner's script behind its name prefix
+  const owner = nameScriptOwner(output);
+  if (owner) {
+    try {
+      return fromOutputScript(owner, network);
+    } catch (e) {}
+  }
+
   throw new Error(bscript.toASM(output) + ' has no matching Address');
 }
 
 /**
- * encodes address to output script with network, return output script if address matched
+ * Returns the output script that pays to an address.
+ *
+ * @param address - A base58check or bech32/bech32m address.
+ * @param network - The network the address must belong to. Defaults to Bitcoin.
+ * @returns The output script.
+ * @throws {Error} If the address is invalid or belongs to another network.
  */
 export function toOutputScript(address: string, network?: Network): Buffer {
   network = network || networks.bitcoin;

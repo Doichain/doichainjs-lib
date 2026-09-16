@@ -1,7 +1,9 @@
 {
   "$schema": "https://typedoc.org/schema.json",
-  "name": "bitcoinjs-lib",
-  "entryPoints": ["./ts_src"],
+  "name": "@doichain/doichainjs-lib",
+  "entryPoints": [
+    "./ts_src"
+  ],
   "out": "docs",
   "searchCategoryBoosts": {
     "Component": 2,

@@ -5,18 +5,14 @@ import * as ecc from 'tiny-secp256k1';
 import {
   address,
   initEccLib,
+  nameops,
   payments,
   Psbt,
   script as bscript,
   Transaction,
 } from '..';
+import * as psbtutils from '../src/psbt/psbtutils';
 import * as fixtures from './fixtures/nameops.json';
-
-// The name operation helpers exist only in the compiled src/, not in ts_src/
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const nameops = require('../src/nameops');
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const psbtutils = require('../src/psbt/psbtutils');
 
 const ECPair = ECPairFactory(ecc);
 initEccLib(ecc);
@@ -58,7 +54,7 @@ describe('name operations', () => {
     fixtures.nameScripts.forEach(f => {
       it(`finds the holder's script: ${f.description}`, () => {
         const owner = nameops.nameScriptOwner(Buffer.from(f.script, 'hex'));
-        assert.strictEqual(owner.toString('hex'), f.owner);
+        assert.strictEqual(owner!.toString('hex'), f.owner);
       });
     });
 
@@ -83,6 +79,119 @@ describe('name operations', () => {
       assert.strictEqual(psbtutils.isP2WPKHNonStandard(p2pkh), false);
       assert.strictEqual(psbtutils.isP2WPKHNonStandard(p2wpkh), true);
       assert.strictEqual(psbtutils.isP2PKHNonStandard(p2wpkh), false);
+    });
+  });
+
+  describe('payments for name outputs', () => {
+    const key = ECPair.fromPrivateKey(Buffer.alloc(32, 2));
+    const other = ECPair.fromPrivateKey(Buffer.alloc(32, 3));
+    const signature = bscript.signature.encode(
+      key.sign(Buffer.alloc(32, 4)),
+      Transaction.SIGHASH_ALL,
+    );
+    const legacy = payments.p2pkh({ pubkey: key.publicKey, network });
+    const witness = payments.p2wpkh({ pubkey: key.publicKey, network });
+    const heldByLegacy = nameDoiScript('hello', 'world', legacy.output!);
+    const heldByWitness = nameDoiScript('hello', 'world', witness.output!);
+
+    it('p2pkhNonstandard: the holder of a name output, with the name script as output', () => {
+      const payment = payments.p2pkhNonstandard({
+        output: heldByLegacy,
+        network,
+      });
+      assert.strictEqual(payment.address, legacy.address);
+      assert.ok(payment.hash!.equals(legacy.hash!));
+      assert.ok(payment.output!.equals(heldByLegacy));
+    });
+
+    it('p2pkhNonstandard: builds the scriptSig of the holder', () => {
+      const payment = payments.p2pkhNonstandard({
+        output: heldByLegacy,
+        pubkey: key.publicKey,
+        signature,
+        network,
+      });
+      const expected = payments.p2pkh({
+        output: legacy.output,
+        pubkey: key.publicKey,
+        signature,
+      });
+      assert.ok(payment.input!.equals(expected.input!));
+    });
+
+    it('p2pkhNonstandard: rejects a key that does not hold the name', () => {
+      assert.throws(
+        () =>
+          payments.p2pkhNonstandard({
+            output: heldByLegacy,
+            pubkey: other.publicKey,
+            network,
+          }),
+        /Hash mismatch/,
+      );
+    });
+
+    it('p2pkhNonstandard: rejects scripts that are not names held by P2PKH', () => {
+      assert.throws(
+        () => payments.p2pkhNonstandard({ output: legacy.output, network }),
+        /Output is not a name script/,
+      );
+      assert.throws(() =>
+        payments.p2pkhNonstandard({ output: heldByWitness, network }),
+      );
+    });
+
+    it('p2pkhNonstandard: has no output without a name script', () => {
+      const payment = payments.p2pkhNonstandard({
+        pubkey: key.publicKey,
+        network,
+      });
+      assert.strictEqual(payment.address, legacy.address);
+      assert.strictEqual(payment.output, undefined);
+    });
+
+    it('p2wpkhNonstandard: the holder of a name output and its witness', () => {
+      const payment = payments.p2wpkhNonstandard({
+        output: heldByWitness,
+        pubkey: key.publicKey,
+        signature,
+        network,
+      });
+      assert.strictEqual(payment.address, witness.address);
+      assert.ok(payment.output!.equals(heldByWitness));
+      assert.strictEqual(payment.input!.length, 0);
+      assert.deepStrictEqual(payment.witness, [signature, key.publicKey]);
+    });
+
+    it('p2wpkhNonstandard: has no output without a name script', () => {
+      const payment = payments.p2wpkhNonstandard({
+        pubkey: key.publicKey,
+        network,
+      });
+      assert.strictEqual(payment.address, witness.address);
+      assert.strictEqual(payment.output, undefined);
+    });
+
+    it('p2wpkhNonstandard: rejects scripts that are not name scripts', () => {
+      assert.throws(
+        () => payments.p2wpkhNonstandard({ output: witness.output, network }),
+        /Output is not a name script/,
+      );
+    });
+
+    it('p2wpkhNonstandard: rejects names held by P2PKH and keys of others', () => {
+      assert.throws(() =>
+        payments.p2wpkhNonstandard({ output: heldByLegacy, network }),
+      );
+      assert.throws(
+        () =>
+          payments.p2wpkhNonstandard({
+            output: heldByWitness,
+            pubkey: other.publicKey,
+            network,
+          }),
+        /Hash mismatch/,
+      );
     });
   });
 

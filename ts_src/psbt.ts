@@ -38,7 +38,9 @@ import {
   isP2MS,
   isP2PK,
   isP2PKH,
+  isP2PKHNonStandard,
   isP2WPKH,
+  isP2WPKHNonStandard,
   isP2WSHScript,
   isP2SHScript,
   isP2TR,
@@ -1292,6 +1294,8 @@ function canFinalize(
     case 'pubkey':
     case 'pubkeyhash':
     case 'witnesspubkeyhash':
+    case 'pubkeyhashnonstandard':
+    case 'witnesspubkeyhashnonstandard':
       return hasSigs(1, input.partialSig);
     case 'multisig':
       const p2ms = payments.p2ms({ output: script });
@@ -1654,6 +1658,18 @@ function getHashForSig(
       prevout.value,
       sighashType,
     );
+  } else if (isP2WPKHNonStandard(meaningfulScript)) {
+    // A name output held by a P2WPKH address is signed like P2WPKH: BIP143 with
+    // the P2PKH template of the holder's key hash
+    const signingScript = payments.p2pkh({
+      hash: payments.p2wpkhNonstandard({ output: meaningfulScript }).hash,
+    }).output!;
+    hash = unsignedTx.hashForWitnessV0(
+      inputIndex,
+      signingScript,
+      prevout.value,
+      sighashType,
+    );
   } else if (isP2WPKH(meaningfulScript)) {
     // P2WPKH uses the P2PKH template for prevoutScript when signing
     const signingScript = payments.p2pkh({ hash: meaningfulScript.slice(2) })
@@ -1850,6 +1866,20 @@ function getPayment(
         signature: partialSig[0].signature,
       });
       break;
+    case 'pubkeyhashnonstandard':
+      payment = payments.p2pkhNonstandard({
+        output: script,
+        pubkey: partialSig[0].pubkey,
+        signature: partialSig[0].signature,
+      });
+      break;
+    case 'witnesspubkeyhashnonstandard':
+      payment = payments.p2wpkhNonstandard({
+        output: script,
+        pubkey: partialSig[0].pubkey,
+        signature: partialSig[0].signature,
+      });
+      break;
   }
   return payment!;
 }
@@ -1891,7 +1921,11 @@ function getScriptFromInput(
       res.script = input.witnessUtxo.script;
     }
   }
-  if (input.witnessScript || isP2WPKH(res.script!)) {
+  if (
+    input.witnessScript ||
+    isP2WPKH(res.script!) ||
+    isP2WPKHNonStandard(res.script!)
+  ) {
     res.isSegwit = true;
   }
   return res;
@@ -2269,11 +2303,15 @@ type AllScriptType =
 type ScriptType =
   | 'witnesspubkeyhash'
   | 'pubkeyhash'
+  | 'witnesspubkeyhashnonstandard'
+  | 'pubkeyhashnonstandard'
   | 'multisig'
   | 'pubkey'
   | 'nonstandard';
 function classifyScript(script: Buffer): ScriptType {
+  if (isP2WPKHNonStandard(script)) return 'witnesspubkeyhashnonstandard';
   if (isP2WPKH(script)) return 'witnesspubkeyhash';
+  if (isP2PKHNonStandard(script)) return 'pubkeyhashnonstandard';
   if (isP2PKH(script)) return 'pubkeyhash';
   if (isP2MS(script)) return 'multisig';
   if (isP2PK(script)) return 'pubkey';

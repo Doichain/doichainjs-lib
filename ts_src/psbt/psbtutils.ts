@@ -28,6 +28,12 @@ export const isP2WPKH = isPaymentFactory(payments.p2wpkh);
 export const isP2WSHScript = isPaymentFactory(payments.p2wsh);
 export const isP2SHScript = isPaymentFactory(payments.p2sh);
 export const isP2TR = isPaymentFactory(payments.p2tr);
+/** Whether the script is a name output held by a P2PKH address. */
+export const isP2PKHNonStandard = isPaymentFactory(payments.p2pkhNonstandard);
+/** Whether the script is a name output held by a P2WPKH address. */
+export const isP2WPKHNonStandard = isPaymentFactory(payments.p2wpkhNonstandard);
+
+export { nameScriptOwner } from '../nameops';
 
 /**
  * Converts a witness stack to a script witness.

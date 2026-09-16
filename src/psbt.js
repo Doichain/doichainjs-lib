@@ -307,15 +307,11 @@ class Psbt {
     throw new Error(`Cannot finalize input #${inputIndex}. Not Taproot.`);
   }
   _finalizeInput(inputIndex, input, finalScriptsFunc = getFinalScripts) {
-    const {
-      script,
-      isP2SH,
-      isP2WSH,
-      isSegwit,
-      isNonStandardP2SH,
-      isNonStandardP2WSH,
-      isNonStandardSegwit,
-    } = getScriptFromInput(inputIndex, input, this.__CACHE);
+    const { script, isP2SH, isP2WSH, isSegwit } = getScriptFromInput(
+      inputIndex,
+      input,
+      this.__CACHE,
+    );
     if (!script) throw new Error(`No script found for input #${inputIndex}`);
     checkPartialSigSighashes(input);
     const { finalScriptSig, finalScriptWitness } = finalScriptsFunc(
@@ -325,9 +321,6 @@ class Psbt {
       isSegwit,
       isP2SH,
       isP2WSH,
-      isNonStandardP2SH,
-      isNonStandardP2WSH,
-      isNonStandardSegwit,
     );
     if (finalScriptSig) this.data.updateInput(inputIndex, { finalScriptSig });
     if (finalScriptWitness)
@@ -1136,17 +1129,7 @@ function getTxCacheValue(key, name, inputs, c) {
   if (key === '__FEE_RATE') return c.__FEE_RATE;
   else if (key === '__FEE') return c.__FEE;
 }
-function getFinalScripts(
-  inputIndex,
-  input,
-  script,
-  isSegwit,
-  isP2SH,
-  isP2WSH,
-  isNonStandardP2SH,
-  isNonStandardP2WSH,
-  isNonStandardSegwit,
-) {  
+function getFinalScripts(inputIndex, input, script, isSegwit, isP2SH, isP2WSH) {
   const scriptType = classifyScript(script);
   if (!canFinalize(input, script, scriptType))
     throw new Error(`Can not finalize input #${inputIndex}`);
@@ -1157,9 +1140,6 @@ function getFinalScripts(
     isSegwit,
     isP2SH,
     isP2WSH,
-    isNonStandardP2SH,
-    isNonStandardP2WSH,
-    isNonStandardSegwit,
   );
 }
 function prepareFinalScripts(
@@ -1169,9 +1149,6 @@ function prepareFinalScripts(
   isSegwit,
   isP2SH,
   isP2WSH,
-  isNonStandardP2SH,
-  isNonStandardP2WSH,
-  isNonStandardSegwit,
 ) {
   let finalScriptSig;
   let finalScriptWitness;
@@ -1268,11 +1245,10 @@ function getHashForSig(inputIndex, input, cache, forValidate, sighashTypes) {
       sighashType,
     );
   } else if ((0, psbtutils_1.isP2WPKHNonStandard)(meaningfulScript)) {
-    // A name output held by a P2WPKH address is spent like P2WPKH: BIP143 with
-    // the P2PKH template of the 20-byte witness program behind the name prefix
-    const owner = (0, psbtutils_1.nameScriptOwner)(meaningfulScript);
+    // A name output held by a P2WPKH address is signed like P2WPKH: BIP143 with
+    // the P2PKH template of the holder's key hash
     const signingScript = payments.p2pkh({
-      hash: owner.slice(2),
+      hash: payments.p2wpkhNonstandard({ output: meaningfulScript }).hash,
     }).output;
     hash = unsignedTx.hashForWitnessV0(
       inputIndex,
@@ -1446,18 +1422,16 @@ function getPayment(script, scriptType, partialSig) {
         signature: partialSig[0].signature,
       });
       break;
-    case 'witnesspubkeyhashnonstandard':
-      // the witness [signature, pubkey] of the P2WPKH address that holds the name
-      payment = payments.p2wpkh({
-        output: (0, psbtutils_1.nameScriptOwner)(script),
+    case 'pubkeyhashnonstandard':
+      payment = payments.p2pkhNonstandard({
+        output: script,
         pubkey: partialSig[0].pubkey,
         signature: partialSig[0].signature,
       });
       break;
-    case 'pubkeyhashnonstandard':
-      // the scriptSig [signature, pubkey] of the P2PKH address that holds the name
-      payment = payments.p2pkh({
-        output: (0, psbtutils_1.nameScriptOwner)(script),
+    case 'witnesspubkeyhashnonstandard':
+      payment = payments.p2wpkhNonstandard({
+        output: script,
         pubkey: partialSig[0].pubkey,
         signature: partialSig[0].signature,
       });
@@ -1472,14 +1446,9 @@ function getScriptFromInput(inputIndex, input, cache) {
     isSegwit: false,
     isP2SH: false,
     isP2WSH: false,
-    isNonStandardSegwit: false,
-    isNonStandardP2SH: false,
-    isNonStandardP2WSH: false,
   };
   res.isP2SH = !!input.redeemScript;
   res.isP2WSH = !!input.witnessScript;
-  res.isNonStandardP2SH = input.version === 0x7100 && !!input.redeemScript;
-  res.isNonStandardP2WSH = input.version === 0x7100 && !!input.witnessScript;
   if (input.witnessScript) {
     res.script = input.witnessScript;
   } else if (input.redeemScript) {
@@ -1497,15 +1466,12 @@ function getScriptFromInput(inputIndex, input, cache) {
       res.script = input.witnessUtxo.script;
     }
   }
-  if ((0, psbtutils_1.isP2WPKHNonStandard)(res.script)) {
-    // a name output held by a P2WPKH address needs a witness and an empty scriptSig
+  if (
+    input.witnessScript ||
+    (0, psbtutils_1.isP2WPKH)(res.script) ||
+    (0, psbtutils_1.isP2WPKHNonStandard)(res.script)
+  ) {
     res.isSegwit = true;
-  } else if (input.witnessScript || (0, psbtutils_1.isP2WPKH)(res.script)) {
-    if (input.version === 0x7100) {
-      res.isNonStandardSegwit = true;
-    } else {
-      res.isSegwit = true;
-    }
   }
   return res;
 }
@@ -1798,7 +1764,6 @@ function classifyScript(script) {
     return 'pubkeyhashnonstandard';
   if ((0, psbtutils_1.isP2PKH)(script)) return 'pubkeyhash';
   if ((0, psbtutils_1.isP2MS)(script)) return 'multisig';
-
   if ((0, psbtutils_1.isP2PK)(script)) return 'pubkey';
   return 'nonstandard';
 }

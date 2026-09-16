@@ -1,10 +1,11 @@
 import * as address from './address';
 import * as crypto from './crypto';
+import * as nameops from './nameops';
 import * as networks from './networks';
 import * as payments from './payments';
 import * as script from './script';
 
-export { address, crypto, networks, payments, script };
+export { address, crypto, nameops, networks, payments, script };
 
 export { Block } from './block';
 /** @hidden */
