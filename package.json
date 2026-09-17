@@ -55,6 +55,9 @@
   "files": [
     "src"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@noble/hashes": "^1.2.0",
     "bech32": "^2.0.0",

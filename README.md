@@ -91,7 +91,7 @@ Inputs spent without a witness, including names held by P2PKH addresses, need `n
 - Read bitcoinjs-lib's [usage notes](https://github.com/bitcoinjs/bitcoinjs-lib/tree/v6.1.6#usage) on random numbers, `Buffer` and best practice. They apply here unchanged.
 - Show users a freshly decoded version of every transaction before they sign it, including the name, value and holder of every name output.
 - Keep the PSBT checks on. Signing a non-segwit input without its previous transaction lets a PSBT lie about amounts, and so about the fee.
-- Nothing yet proves that the npm release matches this repository. Verify what you install.
+- From 6.2.0 on, releases are published by GitHub Actions with npm provenance. `npm audit signatures` checks that the version you installed was built from this repository. Earlier versions were uploaded by hand and carry no provenance.
 - Report security problems privately through [a security advisory](https://github.com/Doichain/doichainjs-lib/security/advisories/new), not in a public issue. See [SECURITY.md](SECURITY.md).
 
 ## Development
@@ -104,6 +104,8 @@ npm test        # build, format check, lint and coverage
 ```
 
 Change the TypeScript sources in `ts_src/` and commit the regenerated `src/` with them. The tests in `test/nameops.spec.ts` compare signatures with transactions that a Doichain Core regtest node accepted (`test/fixtures/nameops.json`).
+
+To release, raise `version` in `package.json` and add a CHANGELOG entry in a pull request. Once it is merged, publish a GitHub release tagged `v<version>` on `master`. The [publish workflow](.github/workflows/publish.yml) runs the tests and publishes to npm. A release marked as pre-release goes to the `next` tag.
 
 ## License
 
