@@ -12,6 +12,7 @@ import {
   Transaction,
 } from '..';
 import * as psbtutils from '../src/psbt/psbtutils';
+import * as nameIndexFixtures from './fixtures/nameindex.json';
 import * as fixtures from './fixtures/nameops.json';
 
 const ECPair = ECPairFactory(ecc);
@@ -418,6 +419,59 @@ describe('name operations', () => {
       assert.throws(
         () => payments.p2pkh({ pubkey: notAKey, network }),
         /isPoint/,
+      );
+    });
+  });
+
+  describe('looking up a name with ElectrumX', () => {
+    type NameIndexFixture = {
+      description: string;
+      name?: string;
+      nameHex?: string;
+      script: string;
+      scriptHash: string;
+    };
+
+    nameIndexFixtures.valid.forEach((f: NameIndexFixture) => {
+      const name =
+        f.name !== undefined ? f.name : Buffer.from(f.nameHex!, 'hex');
+
+      it(`builds the index script: ${f.description}`, () => {
+        assert.strictEqual(
+          nameops.nameIndexScript(name).toString('hex'),
+          f.script,
+        );
+      });
+
+      it(`hashes the index script: ${f.description}`, () => {
+        assert.strictEqual(nameops.nameIndexScriptHash(name), f.scriptHash);
+      });
+    });
+
+    it('encodes a string as UTF-8, the same as its bytes', () => {
+      assert.strictEqual(
+        nameops.nameIndexScriptHash('münchen'),
+        nameops.nameIndexScriptHash(Buffer.from('münchen', 'utf8')),
+      );
+    });
+
+    it('does not normalize: "é" as one or as two code points are two names', () => {
+      const composed = 'café';
+      const decomposed = 'café';
+      assert.notStrictEqual(
+        nameops.nameIndexScriptHash(composed),
+        nameops.nameIndexScriptHash(decomposed),
+      );
+      assert.strictEqual(
+        nameops.nameIndexScriptHash(decomposed.normalize('NFC')),
+        nameops.nameIndexScriptHash(composed),
+      );
+    });
+
+    it('rejects a name that is neither a Buffer nor a string', () => {
+      assert.throws(
+        () => nameops.nameIndexScript(42 as unknown as string),
+        /Expected the name as a Buffer or a string/,
       );
     });
   });

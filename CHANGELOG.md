@@ -8,6 +8,7 @@ __fixed__
 
 __added__
 - `nameops` module with `nameScriptOwner` and `NAME_OPCODES`
+- `nameops.nameIndexScript` and `nameops.nameIndexScriptHash` for looking up names with ElectrumX
 - Tests for name operations with transactions accepted by a Doichain Core regtest node
 
 __changed__

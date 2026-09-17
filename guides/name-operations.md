@@ -89,10 +89,31 @@ A purchase can happen in a single transaction, so either both sides get what the
 2. The buyer signs their coins with `SIGHASH_ALL` and hands the PSBT to the holder.
 3. The holder checks the outputs, signs the name input last and finalizes.
 
-Once a `SIGHASH_ALL` signature exists, the library refuses to change inputs or outputs. It throws `Can not modify transaction, signatures exist.`
+Once a `SIGHASH_ALL` signature exists, the library refuses to change the version, inputs or outputs. It throws `Can not modify transaction, signatures exist.`
+
+## Looking up a name
+
+ElectrumX indexes every operation on a name under the script hash of `OP_NAME_UPDATE <name> <empty value> OP_2DROP OP_DROP OP_RETURN`. `nameops.nameIndexScript` builds that script, and `nameops.nameIndexScriptHash` returns its Electrum script hash:
+
+```ts
+import { nameops } from '@doichain/doichainjs-lib';
+
+const history = await electrum.request('blockchain.scripthash.get_history', [
+  nameops.nameIndexScriptHash(name.normalize('NFC')),
+]);
+```
+
+1. `blockchain.scripthash.get_history` lists every transaction that operated on the name, with its block height (0 or −1 while in the mempool).
+2. `blockchain.transaction.get(txid, true)` returns each transaction. On Doichain's ElectrumX servers, the name's output carries `scriptPubKey.nameOp` with `op`, `name`, `value` and their encodings.
+3. The newest operation holds the name. Its output is the input that a transfer or a purchase has to spend, and its address is the holder.
+4. A name expires 36,000 blocks after its newest operation (`NameExpirationDepth` in Doichain Core's `src/consensus/params.h`). After that, anybody can register it again.
+
+The functions don't normalize. Normalize a name that a user types the way you register names, and pass the bytes of a name read from a transaction unchanged. Pushes are written the way ElectrumX writes them, so a one-byte name stays a push.
 
 ## Tests
 
-`test/nameops.spec.ts` covers the parser for all four operations, the addresses of names held by every standard owner type, the payments for name outputs and the PSBT checks.
+`test/nameops.spec.ts` covers the parser for all four operations, the addresses of names held by every standard owner type, the payments for name outputs, the PSBT checks and the index scripts for looking up names.
+
+`test/fixtures/nameindex.json` holds index scripts and script hashes computed with ElectrumX's own algorithm. Two of them were also checked against a Doichain mainnet ElectrumX server.
 
 The PSBTs in `test/fixtures/nameops.json` are registrations, purchases and value updates for names held by P2PKH and by P2WPKH addresses. Each was built with [names-on-chain](https://github.com/Doichain/names-on-chain) and accepted by a Doichain Core v31.1.5 regtest node. The tests sign them again and compare the result with the accepted transactions, byte for byte.
