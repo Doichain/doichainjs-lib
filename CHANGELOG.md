@@ -14,6 +14,7 @@ __added__
 __changed__
 - The Doichain changes are TypeScript sources in `ts_src/`, so `npm run build` keeps them
 - `base-x` 4.0.1 (GHSA-xq7p-g2vc-g82p)
+- Releases are published from GitHub Actions through npm trusted publishing, with provenance
 
 # 6.1.6
 __fixed__
