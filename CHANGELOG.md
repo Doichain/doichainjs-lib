@@ -1,3 +1,8 @@
+# 6.3.0 (Doichain)
+__added__
+- `networks.doichain`, `networks.doichainTestnet` and `networks.doichainRegtest` with the prefixes from Doichain Core
+- `nameops.nameDoiScript`, `nameops.MAX_NAME_LENGTH` and `nameops.MAX_VALUE_LENGTH` for building name outputs
+
 # 6.2.0 (Doichain)
 __fixed__
 - Restore the PSBT checks of bitcoinjs-lib: signing a non-segwit input needs its previous transaction again, and inputs and outputs can no longer be changed after signatures exist (#9)

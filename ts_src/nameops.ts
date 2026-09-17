@@ -103,6 +103,83 @@ function push(data: Buffer): Buffer {
   return Buffer.concat([prefix, data]);
 }
 
+/** Encodes a string as UTF-8 and passes a Buffer through unchanged. */
+function bytesOf(data: Buffer | string, what: string): Buffer {
+  if (typeof data === 'string') return Buffer.from(data, 'utf8');
+  if (Buffer.isBuffer(data)) return data;
+  throw new TypeError(`Expected the ${what} as a Buffer or a string`);
+}
+
+/** The longest name Doichain Core accepts, in bytes (`MAX_NAME_LENGTH`). */
+export const MAX_NAME_LENGTH = 255;
+
+/** The longest value Doichain Core accepts, in bytes (`MAX_VALUE_LENGTH`). */
+export const MAX_VALUE_LENGTH = 1023;
+
+/**
+ * Returns the output script of an `OP_NAME_DOI` operation, which registers,
+ * transfers or updates a name on Doichain:
+ * `OP_NAME_DOI <name> <value> OP_2DROP OP_DROP <owner's script>`.
+ *
+ * Name and value are pushed with their length in bytes, never as a number
+ * opcode, so an empty value or a one-byte value such as `0x05` still makes a
+ * name script. Strings are encoded as UTF-8 exactly as given: normalize a name
+ * the way your application registers names (for example with
+ * `name.normalize('NFC')`).
+ *
+ * The owner's script decides who holds the name. Build it from an address with
+ * `address.toOutputScript(address, networks.doichain)`, which also checks the
+ * network and the address type. `Psbt` signs name inputs held by P2PKH and
+ * P2WPKH scripts. A transaction with a name output needs version `0x7100`: set
+ * it before anybody signs.
+ *
+ * @example
+ * ```ts
+ * const output = nameops.nameDoiScript(
+ *   name.normalize('NFC'),
+ *   value,
+ *   address.toOutputScript(holderAddress, networks.doichain),
+ * );
+ * psbt.setVersion(0x7100);
+ * psbt.addOutput({ script: output, value: 1_000_000 });
+ * ```
+ *
+ * @param name - The name, at most {@link MAX_NAME_LENGTH} bytes.
+ * @param value - The value, at most {@link MAX_VALUE_LENGTH} bytes. It may be empty.
+ * @param owner - The output script of the holder.
+ * @returns The name output script.
+ * @throws TypeError if the name or the value is too long, or if the owner's
+ * script is empty or carries a name itself.
+ */
+export function nameDoiScript(
+  name: Buffer | string,
+  value: Buffer | string,
+  owner: Buffer,
+): Buffer {
+  const nameBytes = bytesOf(name, 'name');
+  const valueBytes = bytesOf(value, 'value');
+  if (nameBytes.length > MAX_NAME_LENGTH)
+    throw new TypeError(
+      `The name takes ${nameBytes.length} bytes, more than ${MAX_NAME_LENGTH}`,
+    );
+  if (valueBytes.length > MAX_VALUE_LENGTH)
+    throw new TypeError(
+      `The value takes ${valueBytes.length} bytes, more than ${MAX_VALUE_LENGTH}`,
+    );
+  if (!Buffer.isBuffer(owner) || owner.length === 0)
+    throw new TypeError("Expected the owner's output script as a Buffer");
+  if (nameScriptOwner(owner) !== undefined)
+    throw new TypeError("The owner's script carries a name itself");
+
+  return Buffer.concat([
+    Buffer.from([OPS.OP_10]), // OP_NAME_DOI
+    push(nameBytes),
+    push(valueBytes),
+    Buffer.from([OPS.OP_2DROP, OPS.OP_DROP]),
+    owner,
+  ]);
+}
+
 /**
  * Returns the script under which ElectrumX indexes every operation on a name:
  * `OP_NAME_UPDATE <name> <empty value> OP_2DROP OP_DROP OP_RETURN`.
@@ -120,14 +197,9 @@ function push(data: Buffer): Buffer {
  * @returns The index script.
  */
 export function nameIndexScript(name: Buffer | string): Buffer {
-  let bytes: Buffer;
-  if (typeof name === 'string') bytes = Buffer.from(name, 'utf8');
-  else if (Buffer.isBuffer(name)) bytes = name;
-  else throw new TypeError('Expected the name as a Buffer or a string');
-
   return Buffer.concat([
     Buffer.from([OPS.OP_3]), // OP_NAME_UPDATE
-    push(bytes),
+    push(bytesOf(name, 'name')),
     push(Buffer.alloc(0)),
     Buffer.from([OPS.OP_2DROP, OPS.OP_DROP, OPS.OP_RETURN]),
   ]);

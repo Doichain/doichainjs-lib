@@ -2,7 +2,7 @@
 
 Doichain inherits names from Namecoin: a transaction output can carry a name and a value, and whoever can spend that output holds the name. This guide explains how doichainjs-lib reads, builds and spends such outputs.
 
-The examples use the `DOICHAIN` network from the [README](../README.md#networks).
+The examples use `networks.doichain`, see [Networks](../README.md#networks) in the README.
 
 ## The script of a name output
 
@@ -31,30 +31,30 @@ The test fixtures cover `OP_NAME_DOI`, which Doichain uses to register, transfer
 - **Value:** at most 1023 bytes. Doichain Core's wallet allows 520.
 - **Version:** name transactions use version `0x7100`.
 
-The byte limits are `MAX_NAME_LENGTH` and `MAX_VALUE_LENGTH` in Doichain Core's `src/names/main.h`. Limits count bytes, not characters: `ö` takes two bytes in UTF-8. Names that look alike can still differ byte for byte, so normalize text (for example to Unicode NFC) before you encode it.
+The byte limits are `MAX_NAME_LENGTH` and `MAX_VALUE_LENGTH` in Doichain Core's `src/names/main.h`, and `nameops.MAX_NAME_LENGTH` and `nameops.MAX_VALUE_LENGTH` in this library. Limits count bytes, not characters: `ö` takes two bytes in UTF-8. Names that look alike can still differ byte for byte, so normalize text (for example to Unicode NFC) before you encode it.
 
 ## Building a name output
 
 ```ts
-import { address, opcodes, Psbt, script } from '@doichain/doichainjs-lib';
+import { address, nameops, networks, Psbt } from '@doichain/doichainjs-lib';
 
-const nameScript = Buffer.concat([
-  script.compile([
-    opcodes.OP_10,
-    Buffer.from(name.normalize('NFC'), 'utf8'),
-    Buffer.from(value, 'utf8'),
-    opcodes.OP_2DROP,
-    opcodes.OP_DROP,
-  ]),
-  address.toOutputScript(holderAddress, DOICHAIN),
-]);
+const nameScript = nameops.nameDoiScript(
+  name.normalize('NFC'),
+  value,
+  address.toOutputScript(holderAddress, networks.doichain),
+);
 
-const psbt = new Psbt({ network: DOICHAIN });
+const psbt = new Psbt({ network: networks.doichain });
 psbt.setVersion(0x7100);
 psbt.addOutput({ script: nameScript, value: 1_000_000 });
 ```
 
-`script.compile` writes the shortest encoding for each item. An empty value becomes `OP_0`, which is a valid push. A one-byte value from `0x01` to `0x10`, or `0x81`, becomes an opcode such as `OP_1` instead of a push, and the output would no longer carry a name. Write the push yourself for such values.
+`nameops.nameDoiScript` writes `OP_NAME_DOI <name> <value> OP_2DROP OP_DROP <owner's script>` and throws if the name or the value is longer than Doichain Core accepts.
+
+- **Pushes:** name and value are pushed with their length in bytes. An empty value or a one-byte value such as `0x05` still makes a name script. `script.compile` would write such a value as a number opcode like `OP_5`, and the output would no longer carry a name.
+- **Strings:** they are encoded as UTF-8 exactly as given, so normalize names before you pass them in.
+- **Owner:** `address.toOutputScript` builds the owner's script for every address type and checks the network. Only a real address of the recipient keeps the name spendable: taking just the hash out of a P2SH or Taproot address and wrapping it in a P2PKH or P2WPKH script makes the name output unspendable. `Psbt` signs name inputs held by P2PKH and P2WPKH scripts.
+- **Version:** set `0x7100` before anybody signs, because a signed PSBT refuses to change its version.
 
 The regtest fixtures lock 0.01 DOI (1,000,000 swartz) in each name output.
 

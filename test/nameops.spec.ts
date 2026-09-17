@@ -475,4 +475,138 @@ describe('name operations', () => {
       );
     });
   });
+
+  describe('building a name output', () => {
+    /** The pushes of an OP_NAME_DOI prefix, read byte by byte. */
+    const pushesOf = (script: Buffer): Buffer[] => {
+      const found: Buffer[] = [];
+      let position = 1;
+      while (script[position] !== OPS.OP_2DROP) {
+        const opcode = script[position++];
+        let length = opcode;
+        if (opcode === OPS.OP_PUSHDATA1) {
+          length = script[position++];
+        } else if (opcode === OPS.OP_PUSHDATA2) {
+          length = script.readUInt16LE(position);
+          position += 2;
+        }
+        found.push(script.slice(position, position + length));
+        position += length;
+      }
+      return found;
+    };
+    const owner = payments.p2wpkh({ hash: Buffer.alloc(20, 7), network })
+      .output!;
+
+    [
+      ...fixtures.registrations,
+      ...fixtures.purchases,
+      ...fixtures.updates,
+    ].forEach(f => {
+      it(`writes the name output Doichain Core accepted: ${f.description}`, () => {
+        const outputs = Transaction.fromHex(f.acceptedTransaction).outs.filter(
+          o => nameops.nameScriptOwner(o.script),
+        );
+        assert.strictEqual(outputs.length, 1);
+        const [name, value] = pushesOf(outputs[0].script);
+        const holder = nameops.nameScriptOwner(outputs[0].script)!;
+        assert.strictEqual(
+          nameops.nameDoiScript(name, value, holder).toString('hex'),
+          outputs[0].script.toString('hex'),
+        );
+      });
+    });
+
+    it('encodes strings as UTF-8, the same as their bytes', () => {
+      assert.ok(
+        nameops
+          .nameDoiScript('münchen', 'wert', owner)
+          .equals(
+            nameops.nameDoiScript(
+              Buffer.from('münchen', 'utf8'),
+              Buffer.from('wert', 'utf8'),
+              owner,
+            ),
+          ),
+      );
+    });
+
+    it('pushes an empty value, so the script still carries a name', () => {
+      const script = nameops.nameDoiScript('hello', '', owner);
+      assert.strictEqual(
+        script.toString('hex'),
+        '5a0568656c6c6f006d75' + owner.toString('hex'),
+      );
+      assert.ok(nameops.nameScriptOwner(script)!.equals(owner));
+    });
+
+    it('pushes a one-byte value instead of writing a number opcode', () => {
+      const script = nameops.nameDoiScript('hello', Buffer.from([0x05]), owner);
+      assert.strictEqual(
+        script.toString('hex'),
+        '5a0568656c6c6f01056d75' + owner.toString('hex'),
+      );
+      assert.ok(nameops.nameScriptOwner(script)!.equals(owner));
+    });
+
+    it('accepts the longest name and value that Doichain Core allows', () => {
+      const script = nameops.nameDoiScript(
+        Buffer.alloc(nameops.MAX_NAME_LENGTH, 0x61),
+        Buffer.alloc(nameops.MAX_VALUE_LENGTH, 0x62),
+        owner,
+      );
+      assert.strictEqual(script.slice(0, 3).toString('hex'), '5a4cff');
+      assert.strictEqual(script.slice(258, 261).toString('hex'), '4dff03');
+      assert.ok(nameops.nameScriptOwner(script)!.equals(owner));
+    });
+
+    it('refuses a name or a value that Doichain Core would reject', () => {
+      assert.throws(
+        () => nameops.nameDoiScript(Buffer.alloc(256), '', owner),
+        /The name takes 256 bytes, more than 255/,
+      );
+      assert.throws(
+        () => nameops.nameDoiScript('ä'.repeat(128), '', owner),
+        /The name takes 256 bytes/,
+      );
+      assert.throws(
+        () => nameops.nameDoiScript('hello', Buffer.alloc(1024), owner),
+        /The value takes 1024 bytes, more than 1023/,
+      );
+    });
+
+    it('refuses an empty owner script and one that carries a name itself', () => {
+      assert.throws(
+        () => nameops.nameDoiScript('hello', '', Buffer.alloc(0)),
+        /Expected the owner's output script as a Buffer/,
+      );
+      assert.throws(
+        () =>
+          nameops.nameDoiScript(
+            'hello',
+            '',
+            nameops.nameDoiScript('other', '', owner),
+          ),
+        /The owner's script carries a name itself/,
+      );
+    });
+
+    it('does not normalize: "é" as one or as two code points are two names', () => {
+      assert.notStrictEqual(
+        nameops.nameDoiScript('café', '', owner).toString('hex'),
+        nameops.nameDoiScript('café', '', owner).toString('hex'),
+      );
+    });
+
+    it('lets address.fromOutputScript return the holder of the name', () => {
+      const holder = payments.p2pkh({ hash: Buffer.alloc(20, 9), network });
+      assert.strictEqual(
+        address.fromOutputScript(
+          nameops.nameDoiScript('hello', 'world', holder.output!),
+          network,
+        ),
+        holder.address,
+      );
+    });
+  });
 });
