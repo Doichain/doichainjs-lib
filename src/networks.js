@@ -2,7 +2,13 @@
 // https://en.bitcoin.it/wiki/List_of_address_prefixes
 // Dogecoin BIP32 is a proposed standard: https://bitcointalk.org/index.php?topic=409731
 Object.defineProperty(exports, '__esModule', { value: true });
-exports.testnet = exports.regtest = exports.bitcoin = void 0;
+exports.doichainRegtest =
+  exports.doichainTestnet =
+  exports.doichain =
+  exports.testnet =
+  exports.regtest =
+  exports.bitcoin =
+    void 0;
 /**
  * Represents the Bitcoin network configuration.
  */
@@ -68,4 +74,46 @@ exports.testnet = {
   pubKeyHash: 0x6f,
   scriptHash: 0xc4,
   wif: 0xef,
+};
+/**
+ * Doichain mainnet, with the prefixes from `chainparams.cpp` in Doichain Core.
+ */
+exports.doichain = {
+  messagePrefix: '\x19Doichain Signed Message:\n',
+  bech32: 'dc',
+  bip32: {
+    public: 0x0488b21e,
+    private: 0x0488ade4,
+  },
+  pubKeyHash: 52,
+  scriptHash: 13,
+  wif: 180,
+};
+/**
+ * Doichain testnet, with the prefixes from `chainparams.cpp` in Doichain Core.
+ */
+exports.doichainTestnet = {
+  messagePrefix: '\x19Doichain Signed Message:\n',
+  bech32: 'td',
+  bip32: {
+    public: 0x043587cf,
+    private: 0x04358394,
+  },
+  pubKeyHash: 111,
+  scriptHash: 196,
+  wif: 239,
+};
+/**
+ * Doichain regtest, with the prefixes from `chainparams.cpp` in Doichain Core.
+ */
+exports.doichainRegtest = {
+  messagePrefix: '\x19Doichain Signed Message:\n',
+  bech32: 'ncrt',
+  bip32: {
+    public: 0x043587cf,
+    private: 0x04358394,
+  },
+  pubKeyHash: 111,
+  scriptHash: 196,
+  wif: 239,
 };

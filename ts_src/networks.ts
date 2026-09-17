@@ -3,7 +3,7 @@
 
 /**
  * Represents a Bitcoin network configuration，including messagePrefix, bech32, bip32, pubKeyHash, scriptHash, wif.
- * Support bitcoin、bitcoin testnet and bitcoin regtest.
+ * Support bitcoin、bitcoin testnet and bitcoin regtest, and Doichain's mainnet, testnet and regtest.
  * @packageDocumentation
  */
 export interface Network {
@@ -85,4 +85,46 @@ export const testnet: Network = {
   pubKeyHash: 0x6f,
   scriptHash: 0xc4,
   wif: 0xef,
+};
+/**
+ * Doichain mainnet, with the prefixes from `chainparams.cpp` in Doichain Core.
+ */
+export const doichain: Network = {
+  messagePrefix: '\x19Doichain Signed Message:\n',
+  bech32: 'dc',
+  bip32: {
+    public: 0x0488b21e,
+    private: 0x0488ade4,
+  },
+  pubKeyHash: 52,
+  scriptHash: 13,
+  wif: 180,
+};
+/**
+ * Doichain testnet, with the prefixes from `chainparams.cpp` in Doichain Core.
+ */
+export const doichainTestnet: Network = {
+  messagePrefix: '\x19Doichain Signed Message:\n',
+  bech32: 'td',
+  bip32: {
+    public: 0x043587cf,
+    private: 0x04358394,
+  },
+  pubKeyHash: 111,
+  scriptHash: 196,
+  wif: 239,
+};
+/**
+ * Doichain regtest, with the prefixes from `chainparams.cpp` in Doichain Core.
+ */
+export const doichainRegtest: Network = {
+  messagePrefix: '\x19Doichain Signed Message:\n',
+  bech32: 'ncrt',
+  bip32: {
+    public: 0x043587cf,
+    private: 0x04358394,
+  },
+  pubKeyHash: 111,
+  scriptHash: 196,
+  wif: 239,
 };

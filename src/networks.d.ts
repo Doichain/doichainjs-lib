@@ -1,6 +1,6 @@
 /**
  * Represents a Bitcoin network configuration，including messagePrefix, bech32, bip32, pubKeyHash, scriptHash, wif.
- * Support bitcoin、bitcoin testnet and bitcoin regtest.
+ * Support bitcoin、bitcoin testnet and bitcoin regtest, and Doichain's mainnet, testnet and regtest.
  * @packageDocumentation
  */
 export interface Network {
@@ -27,4 +27,16 @@ export declare const regtest: Network;
  * Represents the testnet network configuration.
  */
 export declare const testnet: Network;
+/**
+ * Doichain mainnet, with the prefixes from `chainparams.cpp` in Doichain Core.
+ */
+export declare const doichain: Network;
+/**
+ * Doichain testnet, with the prefixes from `chainparams.cpp` in Doichain Core.
+ */
+export declare const doichainTestnet: Network;
+/**
+ * Doichain regtest, with the prefixes from `chainparams.cpp` in Doichain Core.
+ */
+export declare const doichainRegtest: Network;
 export {};

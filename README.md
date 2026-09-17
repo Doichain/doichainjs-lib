@@ -12,6 +12,8 @@ doichainjs-lib is a fork of [bitcoinjs-lib](https://github.com/bitcoinjs/bitcoin
 
 | API | What it does |
 | --- | --- |
+| `networks.doichain`, `networks.doichainTestnet`, `networks.doichainRegtest` | Doichain's network parameters from Doichain Core. |
+| `nameops.nameDoiScript(name, value, owner)` | Builds the output script that registers, transfers or updates a name (`OP_NAME_DOI`), with the byte limits of Doichain Core. |
 | `nameops.nameScriptOwner(script)` | Returns the owner's script behind a name prefix (`OP_NAME_DOI`, `OP_NAME_NEW`, `OP_NAME_FIRSTUPDATE`, `OP_NAME_UPDATE`), parsed like Namecoin's `CNameScript`. |
 | `address.fromOutputScript(script, network)` | Also returns the holder's address for a name output, for every standard owner type. |
 | `Psbt` | Signs and finalizes name inputs held by P2PKH addresses (signature in the scriptSig) and by P2WPKH addresses (BIP143, signature in the witness). |
@@ -28,53 +30,55 @@ npm install @doichain/doichainjs-lib ecpair tiny-secp256k1
 
 ## Networks
 
-The library only ships Bitcoin's network parameters. These are Doichain's, from `chainparams.cpp` in Doichain Core:
+`networks` holds Doichain's parameters next to Bitcoin's. The prefixes come from `chainparams.cpp` in Doichain Core:
 
-```ts
-import { Network } from '@doichain/doichainjs-lib';
+| | `networks.doichain` | `networks.doichainTestnet` | `networks.doichainRegtest` |
+| --- | --- | --- | --- |
+| bech32 prefix | `dc` | `td` | `ncrt` |
+| P2PKH / P2SH version | 52 / 13 | 111 / 196 | 111 / 196 |
+| WIF version | 180 | 239 | 239 |
+| BIP32 public / private | `0x0488b21e` / `0x0488ade4` | `0x043587cf` / `0x04358394` | `0x043587cf` / `0x04358394` |
 
-export const DOICHAIN: Network = {
-  messagePrefix: '\x19Doichain Signed Message:\n',
-  bech32: 'dc',
-  bip32: { public: 0x0488b21e, private: 0x0488ade4 },
-  pubKeyHash: 52,
-  scriptHash: 13,
-  wif: 180,
-};
-
-export const DOICHAIN_REGTEST: Network = {
-  messagePrefix: '\x19Doichain-Regtest Signed Message:\n',
-  bech32: 'ncrt',
-  bip32: { public: 0x043587cf, private: 0x04358394 },
-  pubKeyHash: 111,
-  scriptHash: 196,
-  wif: 239,
-};
-```
-
-Testnet uses the same prefixes as regtest, with `bech32: 'td'`.
+Pass the network to every function that takes one, since the default is Bitcoin.
 
 ## Usage
+
+### Register a name
+
+```ts
+import { address, nameops, networks, Psbt } from '@doichain/doichainjs-lib';
+
+const psbt = new Psbt({ network: networks.doichain });
+psbt.setVersion(0x7100); // name transactions
+psbt.addOutput({
+  script: nameops.nameDoiScript(
+    name.normalize('NFC'),
+    value,
+    address.toOutputScript(holderAddress, networks.doichain),
+  ),
+  value: 1_000_000, // locked in the name output
+});
+```
 
 ### Find out who holds a name
 
 ```ts
-import { address, nameops } from '@doichain/doichainjs-lib';
+import { address, nameops, networks } from '@doichain/doichainjs-lib';
 
 const owner = nameops.nameScriptOwner(output); // undefined if the output carries no name
-const holder = address.fromOutputScript(output, DOICHAIN);
+const holder = address.fromOutputScript(output, networks.doichain);
 ```
 
 ### Sign the name input of a purchase
 
 ```ts
-import { Psbt } from '@doichain/doichainjs-lib';
+import { networks, Psbt } from '@doichain/doichainjs-lib';
 import ECPairFactory from 'ecpair';
 import * as ecc from 'tiny-secp256k1';
 
 const ECPair = ECPairFactory(ecc);
-const psbt = Psbt.fromBase64(psbtBase64, { network: DOICHAIN });
-psbt.signInput(nameInputIndex, ECPair.fromWIF(holderWif, DOICHAIN));
+const psbt = Psbt.fromBase64(psbtBase64, { network: networks.doichain });
+psbt.signInput(nameInputIndex, ECPair.fromWIF(holderWif, networks.doichain));
 const tx = psbt.finalizeAllInputs().extractTransaction();
 ```
 
@@ -83,7 +87,7 @@ Inputs spent without a witness, including names held by P2PKH addresses, need `n
 ## Documentation
 
 - [Name operations](guides/name-operations.md): the script layout and its limits, and how to build, spend and trade names.
-- API reference: `npm run doc` writes it to `docs/`.
+- [API reference](https://doichain.github.io/doichainjs-lib/), built from the JSDoc. `npm run doc` writes it to `docs/`.
 - For everything that is not specific to Doichain, the [bitcoinjs-lib documentation](https://bitcoinjs.github.io/bitcoinjs-lib/) and its [examples](https://github.com/bitcoinjs/bitcoinjs-lib/tree/v6.1.6/test/integration) apply.
 
 ## Security
