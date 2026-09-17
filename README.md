@@ -16,6 +16,7 @@ doichainjs-lib is a fork of [bitcoinjs-lib](https://github.com/bitcoinjs/bitcoin
 | `address.fromOutputScript(script, network)` | Also returns the holder's address for a name output, for every standard owner type. |
 | `Psbt` | Signs and finalizes name inputs held by P2PKH addresses (signature in the scriptSig) and by P2WPKH addresses (BIP143, signature in the witness). |
 | `payments.p2pkhNonstandard`, `payments.p2wpkhNonstandard` | Payments for name outputs held by P2PKH and P2WPKH addresses. |
+| `nameops.nameIndexScript(name)`, `nameops.nameIndexScriptHash(name)` | The script and the Electrum script hash under which ElectrumX indexes a name, for looking names up with `blockchain.scripthash.get_history`. |
 
 ## Installation
 
