@@ -28,10 +28,10 @@ The test fixtures cover `OP_NAME_DOI`, which Doichain uses to register, transfer
 ## Limits
 
 - **Name:** at most 255 bytes.
-- **Value:** at most 1023 bytes. Doichain Core's wallet allows 520.
+- **Value:** at most 520 bytes. Doichain Core accepts values up to 1023 bytes, but an output with a longer value can never be spent: spending runs the whole output script, and the script interpreter refuses every push longer than 520 bytes. The name keeps that value until it expires, and its locked coin is lost. Core's own RPCs stop at 520 bytes for this reason.
 - **Version:** name transactions use version `0x7100`.
 
-The byte limits are `MAX_NAME_LENGTH` and `MAX_VALUE_LENGTH` in Doichain Core's `src/names/main.h`, and `nameops.MAX_NAME_LENGTH` and `nameops.MAX_VALUE_LENGTH` in this library. Limits count bytes, not characters: `ö` takes two bytes in UTF-8. Names that look alike can still differ byte for byte, so normalize text (for example to Unicode NFC) before you encode it.
+The byte limits are `MAX_NAME_LENGTH` and `MAX_VALUE_LENGTH_UI` in Doichain Core's `src/names/main.h`, and `nameops.MAX_NAME_LENGTH` and `nameops.MAX_VALUE_LENGTH` in this library. Limits count bytes, not characters: `ö` takes two bytes in UTF-8. Names that look alike can still differ byte for byte, so normalize text (for example to Unicode NFC) before you encode it.
 
 ## Building a name output
 

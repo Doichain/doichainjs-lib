@@ -30,8 +30,15 @@ export declare const NAME_OPCODES: readonly number[];
 export declare function nameScriptOwner(script: Buffer): Buffer | undefined;
 /** The longest name Doichain Core accepts, in bytes (`MAX_NAME_LENGTH`). */
 export declare const MAX_NAME_LENGTH = 255;
-/** The longest value Doichain Core accepts, in bytes (`MAX_VALUE_LENGTH`). */
-export declare const MAX_VALUE_LENGTH = 1023;
+/**
+ * The longest value a name output can carry and still be spent, in bytes.
+ *
+ * Doichain Core accepts values up to 1023 bytes, but spending a name output
+ * runs its whole script, and the script interpreter refuses every push longer
+ * than 520 bytes. A longer value freezes the name and its locked coin for good,
+ * which is why Core's own RPCs stop at 520 bytes (`MAX_VALUE_LENGTH_UI`).
+ */
+export declare const MAX_VALUE_LENGTH = 520;
 /**
  * Returns the output script of an `OP_NAME_DOI` operation, which registers,
  * transfers or updates a name on Doichain:

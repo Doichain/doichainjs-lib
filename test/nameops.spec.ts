@@ -549,18 +549,18 @@ describe('name operations', () => {
       assert.ok(nameops.nameScriptOwner(script)!.equals(owner));
     });
 
-    it('accepts the longest name and value that Doichain Core allows', () => {
+    it('accepts the longest name and the longest value that can be spent', () => {
       const script = nameops.nameDoiScript(
         Buffer.alloc(nameops.MAX_NAME_LENGTH, 0x61),
         Buffer.alloc(nameops.MAX_VALUE_LENGTH, 0x62),
         owner,
       );
       assert.strictEqual(script.slice(0, 3).toString('hex'), '5a4cff');
-      assert.strictEqual(script.slice(258, 261).toString('hex'), '4dff03');
+      assert.strictEqual(script.slice(258, 261).toString('hex'), '4d0802');
       assert.ok(nameops.nameScriptOwner(script)!.equals(owner));
     });
 
-    it('refuses a name or a value that Doichain Core would reject', () => {
+    it('refuses a name that Doichain Core would reject', () => {
       assert.throws(
         () => nameops.nameDoiScript(Buffer.alloc(256), '', owner),
         /The name takes 256 bytes, more than 255/,
@@ -569,10 +569,31 @@ describe('name operations', () => {
         () => nameops.nameDoiScript('ä'.repeat(128), '', owner),
         /The name takes 256 bytes/,
       );
+    });
+
+    it('refuses a value that Doichain Core accepts but can never spend', () => {
       assert.throws(
-        () => nameops.nameDoiScript('hello', Buffer.alloc(1024), owner),
-        /The value takes 1024 bytes, more than 1023/,
+        () => nameops.nameDoiScript('hello', Buffer.alloc(521), owner),
+        /The value takes 521 bytes, more than 520; a name output with a longer value can never be spent/,
       );
+      assert.throws(
+        () => nameops.nameDoiScript('hello', Buffer.alloc(1023), owner),
+        /The value takes 1023 bytes/,
+      );
+    });
+
+    it('still reads a name output whose value is too long to spend', () => {
+      const frozen = Buffer.concat([
+        bscript.compile([
+          OPS.OP_10,
+          Buffer.from('hello'),
+          Buffer.alloc(1023, 0x62),
+          OPS.OP_2DROP,
+          OPS.OP_DROP,
+        ]),
+        owner,
+      ]);
+      assert.ok(nameops.nameScriptOwner(frozen)!.equals(owner));
     });
 
     it('refuses an empty owner script and one that carries a name itself', () => {

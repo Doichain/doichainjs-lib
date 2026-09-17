@@ -113,8 +113,15 @@ function bytesOf(data: Buffer | string, what: string): Buffer {
 /** The longest name Doichain Core accepts, in bytes (`MAX_NAME_LENGTH`). */
 export const MAX_NAME_LENGTH = 255;
 
-/** The longest value Doichain Core accepts, in bytes (`MAX_VALUE_LENGTH`). */
-export const MAX_VALUE_LENGTH = 1023;
+/**
+ * The longest value a name output can carry and still be spent, in bytes.
+ *
+ * Doichain Core accepts values up to 1023 bytes, but spending a name output
+ * runs its whole script, and the script interpreter refuses every push longer
+ * than 520 bytes. A longer value freezes the name and its locked coin for good,
+ * which is why Core's own RPCs stop at 520 bytes (`MAX_VALUE_LENGTH_UI`).
+ */
+export const MAX_VALUE_LENGTH = 520;
 
 /**
  * Returns the output script of an `OP_NAME_DOI` operation, which registers,
@@ -164,7 +171,7 @@ export function nameDoiScript(
     );
   if (valueBytes.length > MAX_VALUE_LENGTH)
     throw new TypeError(
-      `The value takes ${valueBytes.length} bytes, more than ${MAX_VALUE_LENGTH}`,
+      `The value takes ${valueBytes.length} bytes, more than ${MAX_VALUE_LENGTH}; a name output with a longer value can never be spent`,
     );
   if (!Buffer.isBuffer(owner) || owner.length === 0)
     throw new TypeError("Expected the owner's output script as a Buffer");
