@@ -23,7 +23,7 @@ The prefix only pushes data and drops it again. What remains is the owner's scri
 
 The test fixtures cover `OP_NAME_DOI`, which Doichain uses to register, transfer and update names.
 
-`nameops.nameScriptOwner` returns the owner's script, or `undefined` for any other script. It reads the prefix like Namecoin's `CNameScript`: data pushes up to the first `OP_DROP`, `OP_2DROP` or `OP_NOP`. An opcode that is not a data push, such as `OP_1` in place of a value, turns the whole script into a non-name script.
+`nameops.nameScriptOwner` returns the owner's script, or `undefined` for any other script. It reads the prefix like Namecoin's `CNameScript`: data pushes up to the first `OP_DROP`, `OP_2DROP` or `OP_NOP`. An opcode that is not a data push, such as `OP_1` in place of a value, turns the whole script into a non-name script. So does a wrong number of pushes, for example `OP_NAME_DOI` with a name but no value: Doichain Core reads no name in such a script.
 
 ## Limits
 
