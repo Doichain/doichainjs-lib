@@ -1,3 +1,8 @@
+# 6.4.0 (Doichain)
+__added__
+- `electrum.ElectrumClient`, a JSON-RPC client for ElectrumX over a WebSocket: requests with a timeout, notifications, a keep-alive ping, and `onclose` for a connection that dropped
+- `electrum.verifyChain`, `electrum.CHECKPOINTS` and `electrum.blockHash` to check that a server follows the Doichain chain of the fork at block 431,017
+
 # 6.3.0 (Doichain)
 __added__
 - `networks.doichain`, `networks.doichainTestnet` and `networks.doichainRegtest` with the prefixes from Doichain Core

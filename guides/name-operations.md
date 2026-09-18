@@ -110,9 +110,24 @@ const history = await electrum.request('blockchain.scripthash.get_history', [
 
 The functions don't normalize. Normalize a name that a user types the way you register names, and pass the bytes of a name read from a transaction unchanged. Pushes are written the way ElectrumX writes them, so a one-byte name stays a push.
 
+## Asking a server, and whether to believe it
+
+`electrum.ElectrumClient` is a small JSON-RPC client over a WebSocket: `connect`, `request`, `on` for the notifications a subscription sends, `close`. It answers a request with whatever the server sent (`0`, `false` and `null` included), gives up on one that stays unanswered (`ETIMEDOUT <method>`), pings a silent server so the connection is not dropped, and calls `onclose` when the connection is gone anyway. It never reconnects by itself: which server to ask next, and how often, is a decision of the application, not of the library.
+
+An ElectrumX server serves whatever chain its node follows, and it sends no proof of it. Doichain Core v31.1.5 split the chain at block 431,017 on 11 September 2026, and servers on the old chain still answer. `electrum.verifyChain` asks for that block and compares its hash with the one of the valid chain:
+
+```ts
+const chain = await electrum.verifyChain(client, networks.doichain);
+// { ok: true } | { ok: false, reason: 'wrongChain' | 'unverified' }
+```
+
+`wrongChain` means the server has another block at that height; `unverified` that it did not answer, or has not reached the block yet. A network without a checkpoint – testnet and regtest – passes. This does not prove the newest blocks; it catches the server that is on the wrong chain altogether.
+
+`electrum.blockHash` is the hash behind that comparison: SHA-256 twice over the first 80 bytes of a header. A Doichain header carries its merged-mining (AuxPoW) data after those bytes, and that data is not part of the hash.
+
 ## Tests
 
-`test/nameops.spec.ts` covers the parser for all four operations, the addresses of names held by every standard owner type, the payments for name outputs, the PSBT checks and the index scripts for looking up names.
+`test/electrum.spec.ts` drives the client through a WebSocket of its own: answers, notifications, timeouts, a dropped connection, the ping and the chain check. `test/nameops.spec.ts` covers the parser for all four operations, the addresses of names held by every standard owner type, the payments for name outputs, the PSBT checks and the index scripts for looking up names.
 
 `test/fixtures/nameindex.json` holds index scripts and script hashes computed with ElectrumX's own algorithm. Two of them were also checked against a Doichain mainnet ElectrumX server.
 

@@ -69,6 +69,27 @@ const owner = nameops.nameScriptOwner(output); // undefined if the output carrie
 const holder = address.fromOutputScript(output, networks.doichain);
 ```
 
+### Talk to an ElectrumX server
+
+```ts
+import { electrum, nameops, networks } from '@doichain/doichainjs-lib';
+
+const client = new electrum.ElectrumClient('wss://electrum.example:50004/');
+await client.connect();
+
+// a server answers with whatever chain its node follows, so check it first
+const chain = await electrum.verifyChain(client, networks.doichain);
+if (!chain.ok) throw new Error(`this server is on another chain: ${chain.reason}`);
+
+const history = await client.request('blockchain.scripthash.get_history', [
+  nameops.nameIndexScriptHash('my-name'),
+]);
+client.on('blockchain.headers.subscribe', ([header]) => console.log(header.height));
+await client.request('blockchain.headers.subscribe');
+```
+
+The client keeps an idle connection open with a ping and says through `onclose` when the connection is gone; which server to try next is the application's decision. Node 22 and every browser have a `WebSocket`; an older runtime can pass one (`new electrum.ElectrumClient(url, { webSocket })`).
+
 ### Sign the name input of a purchase
 
 ```ts
