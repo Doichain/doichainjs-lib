@@ -88,12 +88,18 @@ export declare class ElectrumClient {
     private stopKeepAlive;
 }
 /**
- * A block only the valid Doichain chain has. Doichain Core v31.1.5 split the
- * chain at block 431,017 on 11 September 2026; a server that still follows the
- * old chain has another block at that height. Testnet and regtest have none.
+ * The first block that tells the two Doichain chains apart.
  *
- * The key is the network's bech32 prefix, so a network object that carries
- * extra fields of its own still matches.
+ * The new rules of Doichain Core v31 took effect at height 431,017 on
+ * 11 September 2026, but that block is on both chains: Doichain never enforced
+ * `nBits`, so the old 0.20 nodes accepted it despite its new difficulty. Both
+ * chains build their next block on it, and there they part – at **431,018**
+ * the chain of the fork has `71d5…4b67`, the old one `bab4…2d34`. A checkpoint
+ * at 431,017 would therefore pass on either chain.
+ *
+ * Testnet and regtest have no checkpoint. The key is the network's bech32
+ * prefix, so a network object that carries extra fields of its own still
+ * matches.
  */
 export declare const CHECKPOINTS: {
     [bech32: string]: {
@@ -113,9 +119,9 @@ export declare function blockHash(headerHex: string): string;
 /**
  * Asks a server for the checkpoint block and compares its hash.
  *
- * This does not prove the newest blocks, but a server on the old chain, or one
- * that has not reached the split yet, fails it. A network without a checkpoint
- * (testnet, regtest) passes.
+ * This does not prove the newest blocks, but a server on the other chain, or
+ * one that has not reached the split yet, fails it. A network without a
+ * checkpoint (testnet, regtest) passes.
  *
  * @returns `{ok: true}`, or why the server cannot be trusted
  */

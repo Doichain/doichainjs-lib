@@ -114,7 +114,9 @@ The functions don't normalize. Normalize a name that a user types the way you re
 
 `electrum.ElectrumClient` is a small JSON-RPC client over a WebSocket: `connect`, `request`, `on` for the notifications a subscription sends, `close`. It answers a request with whatever the server sent (`0`, `false` and `null` included), gives up on one that stays unanswered (`ETIMEDOUT <method>`), pings a silent server so the connection is not dropped, and calls `onclose` when the connection is gone anyway. It never reconnects by itself: which server to ask next, and how often, is a decision of the application, not of the library.
 
-An ElectrumX server serves whatever chain its node follows, and it sends no proof of it. Doichain Core v31.1.5 split the chain at block 431,017 on 11 September 2026, and servers on the old chain still answer. `electrum.verifyChain` asks for that block and compares its hash with the one of the valid chain:
+An ElectrumX server serves whatever chain its node follows, and it sends no proof of it. The new rules took effect at block 431,017 on 11 September 2026, and servers on the old chain still answer — they are ahead by thousands of blocks, because the old chain kept mining at the old difficulty.
+
+The block to ask for is **431,018**, not 431,017: Doichain never enforced `nBits`, so the old nodes accepted block 431,017 as well, and both chains build on it. They part one block later, where the chain of the fork has `71d5…4b67` and the old one `bab4…2d34`. `electrum.verifyChain` asks for that block and compares its hash:
 
 ```ts
 const chain = await electrum.verifyChain(client, networks.doichain);

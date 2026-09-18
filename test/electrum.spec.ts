@@ -195,14 +195,20 @@ describe('electrum.ElectrumClient', () => {
 });
 
 describe('electrum.verifyChain', () => {
-  /** the header of block 431,017 of the valid chain, with its AuxPoW data cut off */
-  const CHECKPOINT_HEADER =
-    '00000020' +
-    '0'.repeat(64) +
-    '0'.repeat(64) +
-    '00000000' +
-    '00000000' +
-    '00000000';
+  /**
+   * The two blocks at height 431,018, as their servers send them: both build on
+   * block 431,017, which the chain of the fork and the old chain share, and
+   * there the chains part. Only the first 80 bytes are needed – a Doichain
+   * header carries its merged-mining data behind them.
+   */
+  const FORK_HEADER =
+    '0401020020a30dcd6b7cc2cce9f365f92e222f964561069f1c0e1e06622809bf09caa4' +
+    '75db46a60c1cbc5627d1cc399fcc2e09f11f768fe3407df2409e4fc35ff0613a318c31' +
+    'a46a3403101a00000000';
+  const OLD_CHAIN_HEADER =
+    '0401020020a30dcd6b7cc2cce9f365f92e222f964561069f1c0e1e06622809bf09caa4' +
+    '75ecd804cc0cfed9092743a069de31d4b9983646b5a4ae33094f5eef6ebb59f6de1b1d' +
+    'a46a3403101a00000000';
 
   const answering = (
     answer: unknown,
@@ -213,34 +219,38 @@ describe('electrum.verifyChain', () => {
     },
   });
 
-  it('accepts a network without a checkpoint', async () => {
-    const seen = await electrum.verifyChain(
-      answering(new Error('never asked')),
-      networks.doichainRegtest,
+  it('knows the hash of the block the chains part at', () => {
+    assert.strictEqual(
+      electrum.blockHash(FORK_HEADER),
+      electrum.CHECKPOINTS[networks.doichain.bech32].hash,
     );
-    assert.deepStrictEqual(seen, { ok: true });
+    assert.strictEqual(
+      electrum.blockHash(OLD_CHAIN_HEADER),
+      'bab49c132328d09664261c3061608442408d4f667eaa457ed874b879923f2d34',
+    );
   });
 
-  it('accepts the server that has the checkpoint block', async () => {
-    const header = CHECKPOINT_HEADER;
-    const hash = electrum.blockHash(header);
-    const checkpoint = electrum.CHECKPOINTS[networks.doichain.bech32];
-    const original = checkpoint.hash;
-    checkpoint.hash = hash;
-    try {
-      assert.deepStrictEqual(
-        await electrum.verifyChain(answering(header), networks.doichain),
-        { ok: true },
-      );
-    } finally {
-      checkpoint.hash = original;
-    }
-  });
-
-  it('refuses a server with another block at that height', async () => {
+  it('accepts a network without a checkpoint', async () => {
     assert.deepStrictEqual(
       await electrum.verifyChain(
-        answering(CHECKPOINT_HEADER),
+        answering(new Error('never asked')),
+        networks.doichainRegtest,
+      ),
+      { ok: true },
+    );
+  });
+
+  it('accepts the server that has the block of the fork', async () => {
+    assert.deepStrictEqual(
+      await electrum.verifyChain(answering(FORK_HEADER), networks.doichain),
+      { ok: true },
+    );
+  });
+
+  it('refuses the server that has the old chain at that height', async () => {
+    assert.deepStrictEqual(
+      await electrum.verifyChain(
+        answering(OLD_CHAIN_HEADER),
         networks.doichain,
       ),
       { ok: false, reason: 'wrongChain' },
@@ -262,10 +272,9 @@ describe('electrum.verifyChain', () => {
   });
 
   it('hashes only the first 80 bytes, not the merged-mining data behind them', () => {
-    const auxpow = CHECKPOINT_HEADER + 'ff'.repeat(200);
     assert.strictEqual(
-      electrum.blockHash(auxpow),
-      electrum.blockHash(CHECKPOINT_HEADER),
+      electrum.blockHash(FORK_HEADER + 'ff'.repeat(600)),
+      electrum.blockHash(FORK_HEADER),
     );
   });
 });
