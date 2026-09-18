@@ -1,6 +1,6 @@
 {
   "name": "@doichain/doichainjs-lib",
-  "version": "6.3.0",
+  "version": "6.4.0",
   "description": "Doichain JavaScript library: addresses, scripts, transactions, PSBTs and name operations (a fork of bitcoinjs-lib)",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",

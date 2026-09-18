@@ -1,6 +1,7 @@
 'use strict';
 Object.defineProperty(exports, '__esModule', { value: true });
-exports.initEccLib =
+exports.ElectrumClient =
+  exports.initEccLib =
   exports.Transaction =
   exports.opcodes =
   exports.Psbt =
@@ -9,6 +10,7 @@ exports.initEccLib =
   exports.payments =
   exports.networks =
   exports.nameops =
+  exports.electrum =
   exports.crypto =
   exports.address =
     void 0;
@@ -16,6 +18,8 @@ const address = require('./address');
 exports.address = address;
 const crypto = require('./crypto');
 exports.crypto = crypto;
+const electrum = require('./electrum');
+exports.electrum = electrum;
 const nameops = require('./nameops');
 exports.nameops = nameops;
 const networks = require('./networks');
@@ -58,5 +62,13 @@ Object.defineProperty(exports, 'initEccLib', {
   enumerable: true,
   get: function () {
     return ecc_lib_1.initEccLib;
+  },
+});
+/** @hidden */
+var electrum_1 = require('./electrum');
+Object.defineProperty(exports, 'ElectrumClient', {
+  enumerable: true,
+  get: function () {
+    return electrum_1.ElectrumClient;
   },
 });
